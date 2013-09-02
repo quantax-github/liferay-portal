@@ -67,7 +67,7 @@ public class ExpandoColumnModelImpl extends BaseModelImpl<ExpandoColumn>
 			{ "defaultData", Types.VARCHAR },
 			{ "typeSettings", Types.CLOB }
 		};
-	public static final String TABLE_SQL_CREATE = "create table ExpandoColumn (columnId LONG not null primary key,companyId LONG,tableId LONG,name VARCHAR(75) null,type_ INTEGER,defaultData STRING null,typeSettings TEXT null)";
+	public static final String TABLE_SQL_CREATE = "create table ExpandoColumn (columnId LONG not null primary key,companyId LONG,tableId LONG,name VARCHAR(255) null,type_ INTEGER,defaultData STRING null,typeSettings TEXT null)";
 	public static final String TABLE_SQL_DROP = "drop table ExpandoColumn";
 	public static final String ORDER_BY_JPQL = " ORDER BY expandoColumn.name ASC";
 	public static final String ORDER_BY_SQL = " ORDER BY ExpandoColumn.name ASC";

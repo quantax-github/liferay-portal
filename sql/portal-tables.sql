@@ -731,7 +731,7 @@ create table ExpandoColumn (
 	columnId LONG not null primary key,
 	companyId LONG,
 	tableId LONG,
-	name VARCHAR(75) null,
+	name VARCHAR(255) null,
 	type_ INTEGER,
 	defaultData STRING null,
 	typeSettings TEXT null
