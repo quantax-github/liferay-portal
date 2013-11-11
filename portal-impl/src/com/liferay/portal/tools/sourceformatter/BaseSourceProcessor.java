@@ -20,7 +20,6 @@ import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.ListUtil;
-import com.liferay.portal.kernel.util.ReleaseInfo;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -57,10 +56,11 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 
 	@Override
 	public void format(
-			boolean useProperties, boolean printErrors, boolean autoFix)
+			boolean useProperties, boolean printErrors, boolean autoFix,
+			String mainReleaseVersion)
 		throws Exception {
 
-		_init(useProperties, printErrors, autoFix);
+		_init(useProperties, printErrors, autoFix, mainReleaseVersion);
 
 		format();
 
@@ -70,11 +70,11 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 	@Override
 	public String format(
 			String fileName, boolean useProperties, boolean printErrors,
-			boolean autoFix)
+			boolean autoFix, String mainReleaseVersion)
 		throws Exception {
 
 		try {
-			_init(useProperties, printErrors, autoFix);
+			_init(useProperties, printErrors, autoFix, mainReleaseVersion);
 
 			return format(fileName);
 		}
@@ -157,9 +157,9 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 			return;
 		}
 
-		ifClause = stripQuotes(ifClause, StringPool.QUOTE);
+		ifClause = stripQuotes(ifClause, CharPool.QUOTE);
 
-		ifClause = stripQuotes(ifClause, StringPool.APOSTROPHE);
+		ifClause = stripQuotes(ifClause, CharPool.APOSTROPHE);
 
 		if (ifClause.contains(StringPool.DOUBLE_SLASH) ||
 			ifClause.contains("/*") || ifClause.contains("*/")) {
@@ -239,6 +239,37 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 		}
 	}
 
+	protected void checkInefficientStringMethods(
+		String line, String fileName, int lineCount) {
+
+		if (mainReleaseVersion.equals(MAIN_RELEASE_VERSION_6_1_0)) {
+			return;
+		}
+
+		String methodName = "toLowerCase";
+
+		int pos = line.indexOf(".toLowerCase()");
+
+		if (pos == -1) {
+			methodName = "toUpperCase";
+
+			pos = line.indexOf(".toUpperCase()");
+		}
+
+		if ((pos == -1) && !line.contains("StringUtil.equalsIgnoreCase(")) {
+			methodName = "equalsIgnoreCase";
+
+			pos = line.indexOf(".equalsIgnoreCase(");
+		}
+
+		if (pos != -1) {
+			processErrorMessage(
+				fileName,
+				"Use StringUtil." + methodName + ": " + fileName + " " +
+					lineCount);
+		}
+	}
+
 	protected void checkLanguageKeys(
 			String fileName, String content, Pattern pattern)
 		throws IOException {
@@ -269,6 +300,7 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 			for (String languageKey : languageKeys) {
 				if (Validator.isNumber(languageKey) ||
 					languageKey.endsWith(StringPool.DASH) ||
+					languageKey.endsWith(StringPool.OPEN_BRACKET) ||
 					languageKey.endsWith(StringPool.PERIOD) ||
 					languageKey.endsWith(StringPool.UNDERLINE) ||
 					languageKey.startsWith(StringPool.DASH) ||
@@ -288,6 +320,45 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 				}
 			}
 		}
+	}
+
+	protected void checkStringBundler(
+		String line, String fileName, int lineCount) {
+
+		if ((!line.startsWith("sb.append(") && !line.contains("SB.append(")) ||
+			!line.endsWith(");")) {
+
+			return;
+		}
+
+		int pos = line.indexOf(".append(");
+
+		line = line.substring(pos + 8, line.length() - 2);
+
+		line = stripQuotes(line, CharPool.QUOTE);
+
+		if (!line.contains(" + ")) {
+			return;
+		}
+
+		String[] lineParts = StringUtil.split(line, " + ");
+
+		for (String linePart : lineParts) {
+			int closeParenthesesCount = StringUtil.count(
+				linePart, StringPool.CLOSE_PARENTHESIS);
+			int openParenthesesCount = StringUtil.count(
+				linePart, StringPool.OPEN_PARENTHESIS);
+
+			if (closeParenthesesCount != openParenthesesCount) {
+				return;
+			}
+
+			if (Validator.isNumber(linePart)) {
+				return;
+			}
+		}
+
+		processErrorMessage(fileName, "plus: " + fileName + " " + lineCount);
 	}
 
 	protected String fixCompatClassImports(File file, String content)
@@ -313,7 +384,7 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 
 			Pattern pattern = Pattern.compile(extendedClassName + "\\W");
 
-			for (;;) {
+			while (true) {
 				Matcher matcher = pattern.matcher(newContent);
 
 				if (!matcher.find()) {
@@ -474,9 +545,7 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 
 	protected abstract void format() throws Exception;
 
-	protected String format(String fileName)
-		throws Exception {
-
+	protected String format(String fileName) throws Exception {
 		return null;
 	}
 
@@ -485,7 +554,7 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 			return _compatClassNamesMap;
 		}
 
-		_compatClassNamesMap = new HashMap<String, String>();
+		Map<String, String> compatClassNamesMap = new HashMap<String, String>();
 
 		String[] includes = new String[] {
 			"**\\portal-compat-shared\\src\\com\\liferay\\compat\\**\\*.java"
@@ -527,9 +596,11 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 				compatClassName, "compat.", StringPool.BLANK);
 
 			if (content.contains("extends " + extendedClassName)) {
-				_compatClassNamesMap.put(compatClassName, extendedClassName);
+				compatClassNamesMap.put(compatClassName, extendedClassName);
 			}
 		}
+
+		_compatClassNamesMap = compatClassNamesMap;
 
 		return _compatClassNamesMap;
 	}
@@ -575,6 +646,71 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 		return null;
 	}
 
+	protected Properties getExclusionsProperties(String fileName)
+		throws IOException {
+
+		InputStream inputStream = null;
+
+		int level = 0;
+
+		if (portalSource) {
+			ClassLoader classLoader =
+				BaseSourceProcessor.class.getClassLoader();
+
+			String sourceFormatterExclusions = System.getProperty(
+				"source-formatter-exclusions",
+				"com/liferay/portal/tools/dependencies/" + fileName);
+
+			URL url = classLoader.getResource(sourceFormatterExclusions);
+
+			if (url == null) {
+				return null;
+			}
+
+			inputStream = url.openStream();
+		}
+		else {
+			try {
+				inputStream = new FileInputStream(fileName);
+			}
+			catch (FileNotFoundException fnfe) {
+			}
+
+			if (inputStream == null) {
+				try {
+					inputStream = new FileInputStream("../" + fileName);
+
+					level = 1;
+				}
+				catch (FileNotFoundException fnfe) {
+				}
+			}
+
+			if (inputStream == null) {
+				try {
+					inputStream = new FileInputStream("../../" + fileName);
+
+					level = 2;
+				}
+				catch (FileNotFoundException fnfe) {
+					return null;
+				}
+			}
+		}
+
+		Properties properties = new Properties();
+
+		properties.load(inputStream);
+
+		inputStream.close();
+
+		if (level > 0) {
+			properties = stripTopLevelDirectories(properties, level);
+		}
+
+		return properties;
+	}
+
 	protected List<String> getFileNames(
 		String basedir, String[] excludes, String[] includes) {
 
@@ -583,7 +719,12 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 		directoryScanner.setBasedir(basedir);
 
 		excludes = ArrayUtil.append(
-			excludes, _excludes, new String[] {"**\\.git\\**"});
+			excludes, _excludes, new String[] {"**\\.git\\**", "**\\tmp\\**"});
+
+		if (portalSource) {
+			excludes = ArrayUtil.append(
+				excludes, new String[] {"**\\webapps\\**"});
+		}
 
 		directoryScanner.setExcludes(excludes);
 
@@ -673,71 +814,6 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 		}
 
 		return _oldCopyright;
-	}
-
-	protected Properties getExclusionsProperties(String fileName)
-		throws IOException {
-
-		InputStream inputStream = null;
-
-		int level = 0;
-
-		if (portalSource) {
-			ClassLoader classLoader =
-				BaseSourceProcessor.class.getClassLoader();
-
-			String sourceFormatterExclusions = System.getProperty(
-				"source-formatter-exclusions",
-				"com/liferay/portal/tools/dependencies/" + fileName);
-
-			URL url = classLoader.getResource(sourceFormatterExclusions);
-
-			if (url == null) {
-				return null;
-			}
-
-			inputStream = url.openStream();
-		}
-		else {
-			try {
-				inputStream = new FileInputStream(fileName);
-			}
-			catch (FileNotFoundException fnfe) {
-			}
-
-			if (inputStream == null) {
-				try {
-					inputStream = new FileInputStream("../" + fileName);
-
-					level = 1;
-				}
-				catch (FileNotFoundException fnfe) {
-				}
-			}
-
-			if (inputStream == null) {
-				try {
-					inputStream = new FileInputStream("../../" + fileName);
-
-					level = 2;
-				}
-				catch (FileNotFoundException fnfe) {
-					return null;
-				}
-			}
-		}
-
-		Properties properties = new Properties();
-
-		properties.load(inputStream);
-
-		inputStream.close();
-
-		if (level > 0) {
-			properties = stripTopLevelDirectories(properties, level);
-		}
-
-		return properties;
 	}
 
 	protected boolean hasMissingParentheses(String s) {
@@ -834,19 +910,34 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 		return newLine;
 	}
 
-	protected String stripQuotes(String s, String delimeter) {
-		String[] parts = StringUtil.split(s, delimeter);
+	protected String stripQuotes(String s, char delimeter) {
+		boolean insideQuotes = false;
 
-		int i = 1;
+		StringBundler sb = new StringBundler();
 
-		while (i < parts.length) {
-			s = StringUtil.replaceFirst(
-				s, delimeter + parts[i] + delimeter, StringPool.BLANK);
+		for (int i = 0; i < s.length(); i++) {
+			char c = s.charAt(i);
 
-			i = i + 2;
+			if (insideQuotes) {
+				if (c == delimeter) {
+					if ((c > 1) && (s.charAt(i - 1) == CharPool.BACK_SLASH) &&
+						(s.charAt(i - 2) != CharPool.BACK_SLASH)) {
+
+						continue;
+					}
+
+					insideQuotes = false;
+				}
+			}
+			else if (c == delimeter) {
+				insideQuotes = true;
+			}
+			else {
+				sb.append(c);
+			}
 		}
 
-		return s;
+		return sb.toString();
 	}
 
 	protected String stripRedundantParentheses(String s) {
@@ -979,6 +1070,8 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 
 	protected static final String MAIN_RELEASE_VERSION_6_2_0 = "6.2.0";
 
+	protected static final String MAIN_RELEASE_VERSION_7_0_0 = "7.0.0";
+
 	protected static FileImpl fileUtil = FileImpl.getInstance();
 	protected static Pattern languageKeyPattern = Pattern.compile(
 		"LanguageUtil.(?:get|format)\\([^;%]+|Liferay.Language.get\\('([^']+)");
@@ -995,7 +1088,8 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 		Pattern.MULTILINE);
 
 	private void _init(
-			boolean useProperties, boolean printErrors, boolean autoFix)
+			boolean useProperties, boolean printErrors, boolean autoFix,
+			String mainReleaseVersion)
 		throws Exception {
 
 		_errorMessages = new ArrayList<String>();
@@ -1010,7 +1104,7 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 
 		_autoFix = autoFix;
 
-		_setVersion();
+		BaseSourceProcessor.mainReleaseVersion = mainReleaseVersion;
 
 		_excludes = StringUtil.split(
 			GetterUtil.getString(
@@ -1029,21 +1123,6 @@ public abstract class BaseSourceProcessor implements SourceProcessor {
 		}
 		else {
 			return false;
-		}
-	}
-
-	private void _setVersion() throws Exception {
-		String releaseInfoVersion = ReleaseInfo.getVersion();
-
-		if (releaseInfoVersion.startsWith("6.1")) {
-			mainReleaseVersion = MAIN_RELEASE_VERSION_6_1_0;
-		}
-		else if (releaseInfoVersion.startsWith("6.2")) {
-			mainReleaseVersion = MAIN_RELEASE_VERSION_6_2_0;
-		}
-		else {
-			throw new Exception(
-				"Invalid release information: " + ReleaseInfo.getVersion());
 		}
 	}
 

@@ -110,7 +110,7 @@ public class ScriptingPortlet extends GenericPortlet {
 		filePath = getInitParameter("file-path");
 
 		if (Validator.isNull(filePath)) {
-			filePath = StringPool.SLASH;
+			throw new PortletException("file-path parameter is not set");
 		}
 		else if (filePath.contains(StringPool.BACK_SLASH) ||
 				 filePath.contains(StringPool.DOUBLE_SLASH) ||
@@ -207,7 +207,8 @@ public class ScriptingPortlet extends GenericPortlet {
 			ScriptingHelperUtil.getPortletObjects(
 				portletConfig, portletContext, portletRequest, portletResponse);
 
-		ScriptingUtil.exec(null, portletObjects, language, script);
+		ScriptingUtil.exec(
+			null, portletObjects, language, script, StringPool.EMPTY_ARRAY);
 	}
 
 	protected void doRender(

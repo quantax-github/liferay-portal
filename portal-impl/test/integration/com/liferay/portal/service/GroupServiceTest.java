@@ -42,11 +42,12 @@ import com.liferay.portal.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.security.permission.PermissionThreadLocal;
 import com.liferay.portal.test.LiferayIntegrationJUnitTestRunner;
 import com.liferay.portal.test.MainServletExecutionTestListener;
-import com.liferay.portal.test.TransactionalCallbackAwareExecutionTestListener;
+import com.liferay.portal.test.TransactionalExecutionTestListener;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.util.GroupTestUtil;
 import com.liferay.portal.util.LayoutTestUtil;
 import com.liferay.portal.util.PortalUtil;
+import com.liferay.portal.util.RoleTestUtil;
 import com.liferay.portal.util.TestPropsValues;
 import com.liferay.portal.util.UserTestUtil;
 import com.liferay.portlet.asset.service.AssetTagLocalServiceUtil;
@@ -72,7 +73,7 @@ import org.junit.runner.RunWith;
 @ExecutionTestListeners(
 	listeners = {
 		MainServletExecutionTestListener.class,
-		TransactionalCallbackAwareExecutionTestListener.class
+		TransactionalExecutionTestListener.class
 	})
 @RunWith(LiferayIntegrationJUnitTestRunner.class)
 @Transactional
@@ -81,6 +82,31 @@ public class GroupServiceTest {
 	@Before
 	public void setUp() {
 		FinderCacheUtil.clearCache();
+	}
+
+	@Test
+	public void testAddCompanyStagingGroup() throws Exception {
+		Group companyGroup = GroupLocalServiceUtil.getCompanyGroup(
+			TestPropsValues.getCompanyId());
+
+		ServiceContext serviceContext = new ServiceContext();
+
+		serviceContext.setAttribute("staging", Boolean.TRUE);
+
+		Group companyStagingGroup = GroupLocalServiceUtil.addGroup(
+			TestPropsValues.getUserId(), GroupConstants.DEFAULT_PARENT_GROUP_ID,
+			companyGroup.getClassName(), companyGroup.getClassPK(),
+			companyGroup.getGroupId(), companyGroup.getDescriptiveName(),
+			companyGroup.getDescription(), companyGroup.getType(),
+			companyGroup.isManualMembership(),
+			companyGroup.getMembershipRestriction(),
+			companyGroup.getFriendlyURL(), false, companyGroup.isActive(),
+			serviceContext);
+
+		Assert.assertTrue(companyStagingGroup.isCompanyStagingGroup());
+
+		Assert.assertEquals(
+			companyGroup.getGroupId(), companyStagingGroup.getLiveGroupId());
 	}
 
 	@Test
@@ -778,7 +804,7 @@ public class GroupServiceTest {
 	protected void givePermissionToManageSubsites(User user, Group group)
 		throws Exception {
 
-		Role role = ServiceTestUtil.addRole(
+		Role role = RoleTestUtil.addRole(
 			"Subsites Admin", RoleConstants.TYPE_SITE, Group.class.getName(),
 			ResourceConstants.SCOPE_GROUP_TEMPLATE,
 			String.valueOf(GroupConstants.DEFAULT_PARENT_GROUP_ID),
@@ -977,7 +1003,7 @@ public class GroupServiceTest {
 
 	protected void testUpdateDisplaySettings(
 			Locale[] portalAvailableLocales, Locale[] groupAvailableLocales,
-			Locale groupDefaultLocale, boolean fail)
+			Locale groupDefaultLocale, boolean expectFailure)
 		throws Exception {
 
 		UnicodeProperties properties = new UnicodeProperties();
@@ -997,12 +1023,12 @@ public class GroupServiceTest {
 			GroupTestUtil.updateDisplaySettings(
 				group.getGroupId(), groupAvailableLocales, groupDefaultLocale);
 
-			if (fail) {
+			if (expectFailure) {
 				Assert.fail();
 			}
 		}
 		catch (LocaleException le) {
-			if (!fail) {
+			if (!expectFailure) {
 				Assert.fail();
 			}
 		}

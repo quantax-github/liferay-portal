@@ -10,8 +10,8 @@
 .lfr-asset-column-actions {
 	.lfr-asset-summary {
 		margin-bottom: 2em;
-		overflow: hidden;
 		text-align: center;
+		word-break: break-all;
 	}
 
 	.lfr-asset-avatar img {
@@ -93,7 +93,7 @@
 .lfr-asset-panels, .lfr-asset-column-details {
 	.lfr-panel {
 		clear: both;
-		margin-bottom: 1.5em;
+		margin-bottom: 0.2em;
 	}
 }
 

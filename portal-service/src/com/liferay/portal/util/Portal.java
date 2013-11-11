@@ -827,10 +827,11 @@ public interface Portal {
 		HttpServletRequest request, HttpServletResponse response,
 		boolean initialize);
 
-	public Locale getLocale(RenderRequest renderRequest);
+	public Locale getLocale(PortletRequest portletRequest);
 
 	public String getLocalizedFriendlyURL(
-			HttpServletRequest request, Layout layout, Locale locale)
+			HttpServletRequest request, Layout layout, Locale locale,
+			Locale originalLocale)
 		throws Exception;
 
 	public String getMailId(String mx, String popPortletPrefix, Object... ids);
@@ -851,6 +852,12 @@ public interface Portal {
 		throws PortalException, SystemException;
 
 	public String getPathContext();
+
+	public String getPathContext(HttpServletRequest request);
+
+	public String getPathContext(PortletRequest portletRequest);
+
+	public String getPathContext(String contextPath);
 
 	public String getPathFriendlyURLPrivateGroup();
 
@@ -1025,6 +1032,8 @@ public interface Portal {
 	public User getSelectedUser(
 			PortletRequest portletRequest, boolean checkPermission)
 		throws PortalException, SystemException;
+
+	public String getServletContextName();
 
 	public Map<String, List<Portlet>> getSiteAdministrationCategoriesMap(
 			HttpServletRequest request)
@@ -1236,6 +1245,9 @@ public interface Portal {
 	public boolean isLayoutParentable(String type);
 
 	public boolean isLayoutSitemapable(Layout layout);
+
+	public boolean isLoginRedirectRequired(HttpServletRequest request)
+		throws SystemException;
 
 	public boolean isMethodGet(PortletRequest portletRequest);
 

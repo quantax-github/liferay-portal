@@ -40,7 +40,7 @@ long organizationId = organization.getOrganizationId();
 
 Group organizationGroup = organization.getGroup();
 
-long organizationGroupId = organizationGroup.getGroupId();
+long organizationGroupId = organization.getGroupId();
 
 String cssClass = StringPool.BLANK;
 
@@ -83,9 +83,9 @@ if (row == null) {
 
 		<liferay-ui:icon
 			image="permissions"
-			linkCssClass="use-dialog"
 			method="get"
 			url="<%= editOrganizationPermissionsURL %>"
+			useDialog="<%= true %>"
 		/>
 	</c:if>--%>
 

@@ -187,9 +187,8 @@ public class LocalizationImpl implements Localization {
 		if (value != null) {
 			return value;
 		}
-		else {
-			value = StringPool.BLANK;
-		}
+
+		value = StringPool.BLANK;
 
 		String priorityLanguageId = null;
 
@@ -555,7 +554,7 @@ public class LocalizationImpl implements Localization {
 
 		String[] values = preferences.getValues(localizedKey, new String[0]);
 
-		if (useDefault && Validator.isNull(values)) {
+		if (useDefault && ArrayUtil.isEmpty(values)) {
 			values = preferences.getValues(key, new String[0]);
 		}
 
@@ -633,8 +632,8 @@ public class LocalizationImpl implements Localization {
 			if ((availableLocales != null) &&
 				availableLocales.contains(requestedLanguageId)) {
 
-				availableLocales = StringUtil.remove(
-					availableLocales, requestedLanguageId, StringPool.COMMA);
+				availableLocales = StringUtil.removeFromList(
+					availableLocales, requestedLanguageId);
 
 				UnsyncStringWriter unsyncStringWriter =
 					new UnsyncStringWriter();

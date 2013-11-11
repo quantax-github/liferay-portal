@@ -17,7 +17,10 @@ package com.liferay.portal.lar.backgroundtask;
 import com.liferay.portal.NoSuchLayoutException;
 import com.liferay.portal.RemoteExportException;
 import com.liferay.portal.kernel.backgroundtask.BackgroundTaskResult;
+import com.liferay.portal.kernel.lar.ExportImportHelperUtil;
 import com.liferay.portal.kernel.lar.MissingReferences;
+import com.liferay.portal.kernel.lar.PortletDataHandlerKeys;
+import com.liferay.portal.kernel.staging.StagingUtil;
 import com.liferay.portal.kernel.util.FileUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MapUtil;
@@ -74,6 +77,12 @@ public class LayoutRemoteStagingBackgroundTaskExecutor
 		MissingReferences missingReferences = null;
 
 		try {
+			Date lastPublishDate = endDate;
+
+			if (lastPublishDate == null) {
+				lastPublishDate = new Date();
+			}
+
 			file = exportLayoutsAsFile(
 				sourceGroupId, privateLayout, layoutIdMap, parameterMap,
 				remoteGroupId, startDate, endDate, httpPrincipal);
@@ -109,13 +118,23 @@ public class LayoutRemoteStagingBackgroundTaskExecutor
 					new byte[PropsValues.STAGING_REMOTE_TRANSFER_BUFFER_SIZE];
 			}
 
+			backgroundTask = markBackgroundTask(backgroundTask, "exported");
+
 			missingReferences = StagingServiceHttp.validateStagingRequest(
 				httpPrincipal, stagingRequestId, privateLayout, parameterMap);
 
-			backgroundTask = markValidatedBackgroundTask(backgroundTask);
+			backgroundTask = markBackgroundTask(backgroundTask, "validated");
 
 			StagingServiceHttp.publishStagingRequest(
 				httpPrincipal, stagingRequestId, privateLayout, parameterMap);
+
+			boolean updateLastPublishDate = MapUtil.getBoolean(
+				parameterMap, PortletDataHandlerKeys.UPDATE_LAST_PUBLISH_DATE);
+
+			if (updateLastPublishDate) {
+				StagingUtil.updateLastPublishDate(
+					sourceGroupId, privateLayout, lastPublishDate);
+			}
 		}
 		finally {
 			StreamUtil.cleanUp(fileInputStream);
@@ -174,7 +193,7 @@ public class LayoutRemoteStagingBackgroundTaskExecutor
 				}
 			}
 
-			long[] layoutIds = getLayoutIds(layouts);
+			long[] layoutIds = ExportImportHelperUtil.getLayoutIds(layouts);
 
 			if (layoutIds.length <= 0) {
 				throw new RemoteExportException(
@@ -185,18 +204,6 @@ public class LayoutRemoteStagingBackgroundTaskExecutor
 				sourceGroupId, privateLayout, layoutIds, parameterMap,
 				startDate, endDate);
 		}
-	}
-
-	protected long[] getLayoutIds(List<Layout> layouts) {
-		long[] layoutIds = new long[layouts.size()];
-
-		for (int i = 0; i < layouts.size(); i++) {
-			Layout layout = layouts.get(i);
-
-			layoutIds[i] = layout.getLayoutId();
-		}
-
-		return layoutIds;
 	}
 
 	/**

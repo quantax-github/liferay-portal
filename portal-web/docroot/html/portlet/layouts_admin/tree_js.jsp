@@ -163,10 +163,25 @@ if (!selectableTree) {
 				json.layouts,
 				function(node) {
 					var childLayouts = [];
+					var cssIcons = {};
 					var total = 0;
+
+					var iconCssClassName = 'icon-link';
 
 					var hasChildren = node.hasChildren;
 					var nodeChildren = node.children;
+					var nodeType = node.type;
+
+					if ((nodeType === 'embedded') ||
+						(nodeType === 'link_to_layout') ||
+						(nodeType === 'url')) {
+
+						cssIcons.pages = {
+							iconCollapsed: iconCssClassName,
+							iconExpanded: iconCssClassName,
+							iconLeaf: iconCssClassName
+						};
+					}
 
 					if (nodeChildren) {
 						childLayouts = nodeChildren.layouts;
@@ -174,6 +189,12 @@ if (!selectableTree) {
 					}
 
 					var expanded = (total > 0);
+
+					var type = 'task';
+
+					<c:if test="<%= !selectableTree %>">
+						type = (nodeChildren && expanded) ? 'node' : 'io';
+					</c:if>
 
 					var newNode = {
 						<c:if test="<%= saveState %>">
@@ -196,7 +217,7 @@ if (!selectableTree) {
 								childrenChange: function(event) {
 									var target = event.target;
 
-									target.set('alwaysShowHitArea', event.newVal.length > 0);
+									target.set('alwaysShowHitArea', (event.newVal.length > 0));
 
 									target.eachChildren(TreeUtil.restoreSelectedNode);
 
@@ -223,7 +244,7 @@ if (!selectableTree) {
 							checked: true,
 						</c:if>
 
-						cssClasses: TREE_CSS_CLASSES,
+						cssClasses: A.merge(TREE_CSS_CLASSES, cssIcons),
 						draggable: node.sortable,
 						expanded: expanded,
 						id: TreeUtil.createListItemId(node.groupId, node.layoutId, node.plid),
@@ -275,7 +296,7 @@ if (!selectableTree) {
 							start: Math.max(childLayouts.length - TreeUtil.PAGINATION_LIMIT, 0),
 							total: total
 						},
-						type: '<%= !selectableTree ? "io" : "task" %>'
+						type: type
 					};
 
 					if (nodeChildren && expanded) {
@@ -288,7 +309,10 @@ if (!selectableTree) {
 					newNode.label = Util.escapeHTML(node.name);
 
 					if (node.layoutRevisionId) {
-						if (node.layoutBranchName) {
+						if (!node.layoutRevisionHead) {
+							title = '<%= UnicodeLanguageUtil.get(pageContext, "there-is-not-a-version-of-this-page-marked-as-ready-for-publication") %>';
+						}
+						else if (node.layoutBranchName) {
 							node.layoutBranchName = Util.escapeHTML(node.layoutBranchName);
 
 							newNode.label += Lang.sub(' <span class="layout-branch-name" title="<%= UnicodeLanguageUtil.get(pageContext, "this-is-the-page-variation-that-is-marked-as-ready-for-publication") %>">[{layoutBranchName}]</span>', node);

@@ -17,13 +17,14 @@ package com.liferay.portal.tools.samplesqlbuilder;
 import com.liferay.counter.model.Counter;
 import com.liferay.counter.model.CounterModel;
 import com.liferay.counter.model.impl.CounterModelImpl;
+import com.liferay.portal.kernel.io.unsync.UnsyncBufferedReader;
+import com.liferay.portal.kernel.metadata.RawMetadataProcessor;
 import com.liferay.portal.kernel.util.CharPool;
 import com.liferay.portal.kernel.util.ContentTypes;
 import com.liferay.portal.kernel.util.FastDateFormatFactoryUtil;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.IntegerWrapper;
-import com.liferay.portal.kernel.util.ListUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -186,6 +187,7 @@ import com.liferay.util.SimpleCounter;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 
 import java.text.Format;
 
@@ -691,6 +693,13 @@ public class DataFactory {
 	}
 
 	public void initContext(Properties properties) {
+		_assetPublisherQueryName = GetterUtil.getString(
+			properties.getProperty("sample.sql.asset.publisher.query.name"));
+
+		if (!_assetPublisherQueryName.equals("assetCategories")) {
+			_assetPublisherQueryName = "assetTags";
+		}
+
 		_maxAssetCategoryCount = GetterUtil.getInteger(
 			properties.getProperty("sample.sql.max.asset.category.count"));
 		_maxAssetEntryToAssetCategoryCount = GetterUtil.getInteger(
@@ -699,9 +708,6 @@ public class DataFactory {
 		_maxAssetEntryToAssetTagCount = GetterUtil.getInteger(
 			properties.getProperty(
 				"sample.sql.max.asset.entry.to.asset.tag.count"));
-		_maxAssetPublisherFilterRuleCount = GetterUtil.getInteger(
-			properties.getProperty(
-				"sample.sql.max.asset.publisher.filter.rule.count"));
 		_maxAssetPublisherPageCount = GetterUtil.getInteger(
 			properties.getProperty(
 				"sample.sql.max.asset.publisher.page.count"));
@@ -764,7 +770,8 @@ public class DataFactory {
 		_defaultDLFileEntryTypeModel.setCreateDate(nextFutureDate());
 		_defaultDLFileEntryTypeModel.setModifiedDate(nextFutureDate());
 		_defaultDLFileEntryTypeModel.setFileEntryTypeKey(
-			DLFileEntryTypeConstants.NAME_BASIC_DOCUMENT.toUpperCase());
+			StringUtil.toUpperCase(
+				DLFileEntryTypeConstants.NAME_BASIC_DOCUMENT));
 
 		StringBundler sb = new StringBundler(5);
 
@@ -777,8 +784,8 @@ public class DataFactory {
 		_defaultDLFileEntryTypeModel.setName(sb.toString());
 
 		_defaultDLDDMStructureModel = newDDMStructureModel(
-			_guestGroupId, getDLFileEntryClassNameId(), "TIKARAWMETADATA",
-			_dlDDMStructureContent);
+			_guestGroupId, getDLFileEntryClassNameId(),
+			RawMetadataProcessor.TIKA_RAW_METADATA, _dlDDMStructureContent);
 	}
 
 	public void initGroupModels() throws Exception {
@@ -920,10 +927,29 @@ public class DataFactory {
 	}
 
 	public void initUserNames() throws IOException {
-		_firstNames = ListUtil.fromString(
-			StringUtil.read(getResourceInputStream("first_names.txt")));
-		_lastNames = ListUtil.fromString(
-			StringUtil.read(getResourceInputStream("last_names.txt")));
+		_firstNames = new ArrayList<String>();
+
+		UnsyncBufferedReader unsyncBufferedReader = new UnsyncBufferedReader(
+			new InputStreamReader(getResourceInputStream("first_names.txt")));
+
+		String line = null;
+
+		while ((line = unsyncBufferedReader.readLine()) != null) {
+			_firstNames.add(line);
+		}
+
+		unsyncBufferedReader.close();
+
+		_lastNames = new ArrayList<String>();
+
+		unsyncBufferedReader = new UnsyncBufferedReader(
+			new InputStreamReader(getResourceInputStream("last_names.txt")));
+
+		while ((line = unsyncBufferedReader.readLine()) != null) {
+			_lastNames.add(line);
+		}
+
+		unsyncBufferedReader.close();
 	}
 
 	public void initVirtualHostModel() {
@@ -1757,48 +1783,66 @@ public class DataFactory {
 			long plid, long groupId, String portletId, int currentIndex)
 		throws Exception {
 
-		List<AssetCategoryModel> assetCategoryModels =
-			_assetCategoryModelsArray[(int)groupId - 1];
-
-		boolean assetPublisherFilterEnabled = false;
-
-		if ((_maxAssetPublisherPageCount * _maxAssetPublisherFilterRuleCount) >
-				0) {
-
-			assetPublisherFilterEnabled = true;
-		}
-
-		if (!assetPublisherFilterEnabled || (currentIndex == 1) ||
-			(assetCategoryModels == null) || assetCategoryModels.isEmpty()) {
-
+		if (currentIndex == 1) {
 			return newPortletPreferencesModel(
 				plid, portletId, PortletConstants.DEFAULT_PREFERENCES);
 		}
 
-		SimpleCounter counter = _assetPublisherRuleCounter.get(groupId);
+		SimpleCounter counter = _assetPublisherQueryCounter.get(groupId);
 
 		if (counter == null) {
 			counter = new SimpleCounter(0);
 
-			_assetPublisherRuleCounter.put(groupId, counter);
+			_assetPublisherQueryCounter.put(groupId, counter);
+		}
+
+		String[] assetPublisherQueryValues = null;
+
+		if (_assetPublisherQueryName.equals("assetCategories")) {
+			List<AssetCategoryModel> assetCategoryModels =
+				_assetCategoryModelsArray[(int)groupId - 1];
+
+			if ((assetCategoryModels == null) ||
+				assetCategoryModels.isEmpty()) {
+
+				return newPortletPreferencesModel(
+					plid, portletId, PortletConstants.DEFAULT_PREFERENCES);
+			}
+
+			assetPublisherQueryValues =
+				getAssetPublisherAssetCategoriesQueryValues(
+					assetCategoryModels, (int)counter.get());
+		}
+		else {
+			List<AssetTagModel> assetTagModels =
+				_assetTagModelsArray[(int)groupId - 1];
+
+			if ((assetTagModels == null) || assetTagModels.isEmpty()) {
+				return newPortletPreferencesModel(
+					plid, portletId, PortletConstants.DEFAULT_PREFERENCES);
+			}
+
+			assetPublisherQueryValues = getAssetPublisherAssetTagsQueryValues(
+				assetTagModels, (int)counter.get());
 		}
 
 		javax.portlet.PortletPreferences jxPortletPreferences =
 			new com.liferay.portlet.PortletPreferencesImpl();
 
-		for (int i = 0; i < _maxAssetPublisherFilterRuleCount; i++) {
-			int index = (int)counter.get() % assetCategoryModels.size();
-
-			AssetCategoryModel assetCategoryModel = assetCategoryModels.get(
-				index);
-
-			jxPortletPreferences.setValue("queryAndOperator" + i, "false");
-			jxPortletPreferences.setValue("queryContains" + i, "false");
-			jxPortletPreferences.setValue("queryName" + i, "assetCategories");
-			jxPortletPreferences.setValue(
-				"queryValues" + i,
-				String.valueOf(assetCategoryModel.getCategoryId()));
-		}
+		jxPortletPreferences.setValue("queryAndOperator0", "false");
+		jxPortletPreferences.setValue("queryContains0", "true");
+		jxPortletPreferences.setValue("queryName0", _assetPublisherQueryName);
+		jxPortletPreferences.setValues(
+			"queryValues0",
+			new String[] {
+				assetPublisherQueryValues[0], assetPublisherQueryValues[1],
+				assetPublisherQueryValues[2]
+			});
+		jxPortletPreferences.setValue("queryAndOperator1", "false");
+		jxPortletPreferences.setValue("queryContains1", "false");
+		jxPortletPreferences.setValue("queryName1", _assetPublisherQueryName);
+		jxPortletPreferences.setValue(
+			"queryValues1", assetPublisherQueryValues[3]);
 
 		return newPortletPreferencesModel(
 			plid, portletId,
@@ -2079,7 +2123,7 @@ public class DataFactory {
 		MBMessageModel mbMessageModel) {
 
 		long classNameId = mbMessageModel.getClassNameId();
-		long classPk = mbMessageModel.getClassPK();
+		long classPK = mbMessageModel.getClassPK();
 
 		int type = 0;
 		String extraData = null;
@@ -2095,7 +2139,7 @@ public class DataFactory {
 			type = MBActivityKeys.ADD_MESSAGE;
 
 			classNameId = _classNameModelsMap.get(MBMessage.class.getName());
-			classPk = mbMessageModel.getMessageId();
+			classPK = mbMessageModel.getMessageId();
 		}
 		else {
 			StringBundler sb = new StringBundler(5);
@@ -2112,7 +2156,7 @@ public class DataFactory {
 		}
 
 		return newSocialActivityModel(
-			mbMessageModel.getGroupId(), classNameId, classPk, type, extraData);
+			mbMessageModel.getGroupId(), classNameId, classPK, type, extraData);
 	}
 
 	public SubscriptionModel newSubscriptionModel(
@@ -2194,6 +2238,49 @@ public class DataFactory {
 		userName[1] = _lastNames.get((int)(index % _lastNames.size()));
 
 		return userName;
+	}
+
+	protected String[] getAssetPublisherAssetCategoriesQueryValues(
+		List<AssetCategoryModel> assetCategoryModels, int index) {
+
+		AssetCategoryModel assetCategoryModel0 = assetCategoryModels.get(
+			index % assetCategoryModels.size());
+		AssetCategoryModel assetCategoryModel1 = assetCategoryModels.get(
+			(index + _maxAssetEntryToAssetCategoryCount) %
+				assetCategoryModels.size());
+		AssetCategoryModel assetCategoryModel2 = assetCategoryModels.get(
+			(index + _maxAssetEntryToAssetCategoryCount * 2) %
+				assetCategoryModels.size());
+		AssetCategoryModel assetCategoryModel3 = assetCategoryModels.get(
+			(index + _maxAssetEntryToAssetCategoryCount * 3) %
+				assetCategoryModels.size());
+
+		return new String[] {
+			String.valueOf(assetCategoryModel0.getCategoryId()),
+			String.valueOf(assetCategoryModel1.getCategoryId()),
+			String.valueOf(assetCategoryModel2.getCategoryId()),
+			String.valueOf(assetCategoryModel3.getCategoryId())
+		};
+	}
+
+	protected String[] getAssetPublisherAssetTagsQueryValues(
+		List<AssetTagModel> assetTagModels, int index) {
+
+		AssetTagModel assetTagModel0 = assetTagModels.get(
+			index % assetTagModels.size());
+		AssetTagModel assetTagModel1 = assetTagModels.get(
+			(index + _maxAssetEntryToAssetTagCount) % assetTagModels.size());
+		AssetTagModel assetTagModel2 = assetTagModels.get(
+			(index + _maxAssetEntryToAssetTagCount * 2) %
+				assetTagModels.size());
+		AssetTagModel assetTagModel3 = assetTagModels.get(
+			(index + _maxAssetEntryToAssetTagCount * 3) %
+				assetTagModels.size());
+
+		return new String[] {
+			assetTagModel0.getName(), assetTagModel1.getName(),
+			assetTagModel2.getName(), assetTagModel3.getName()
+		};
 	}
 
 	protected InputStream getResourceInputStream(String resourceName) {
@@ -2801,8 +2888,9 @@ public class DataFactory {
 	private Map<Long, SimpleCounter> _assetCategoryCounters =
 		new HashMap<Long, SimpleCounter>();
 	private List<AssetCategoryModel>[] _assetCategoryModelsArray;
-	private Map<Long, SimpleCounter> _assetPublisherRuleCounter =
+	private Map<Long, SimpleCounter> _assetPublisherQueryCounter =
 		new HashMap<Long, SimpleCounter>();
+	private String _assetPublisherQueryName;
 	private Map<Long, SimpleCounter> _assetTagCounters =
 		new HashMap<Long, SimpleCounter>();
 	private List<AssetTagModel>[] _assetTagModelsArray;
@@ -2835,7 +2923,6 @@ public class DataFactory {
 	private int _maxAssetCategoryCount;
 	private int _maxAssetEntryToAssetCategoryCount;
 	private int _maxAssetEntryToAssetTagCount;
-	private int _maxAssetPublisherFilterRuleCount;
 	private int _maxAssetPublisherPageCount;
 	private int _maxAssetTagCount;
 	private int _maxAssetVocabularyCount;

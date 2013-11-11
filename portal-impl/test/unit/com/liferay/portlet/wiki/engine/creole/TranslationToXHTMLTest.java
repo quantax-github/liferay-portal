@@ -46,11 +46,6 @@ import org.powermock.modules.junit4.PowerMockRunner;
  * @author Miguel Pastor
  * @author Manuel de la Peña
  */
-
-/**
- * @author Miguel Pastor
- * @author Manuel de la Peña
- */
 @PrepareForTest(HtmlUtil.class)
 @RunWith(PowerMockRunner.class)
 public class TranslationToXHTMLTest extends PowerMockito {
@@ -455,7 +450,7 @@ public class TranslationToXHTMLTest extends PowerMockito {
 
 	@Test
 	public void testParseLinkEmpty() {
-		Assert.assertEquals("<p> </p>", translate("link-8.creole"));
+		Assert.assertEquals("<p></p>", translate("link-8.creole"));
 	}
 
 	@Test
@@ -642,6 +637,23 @@ public class TranslationToXHTMLTest extends PowerMockito {
 		Assert.assertEquals(
 			"<p>Text with some content in <em>italic</em> </p>",
 			translate("text-3.creole"));
+	}
+
+	@Test
+	public void testParseTableImagesNested() {
+		Assert.assertEquals(
+			"<table><tr><th>H1</th></tr><tr><td><img " +
+				"src=\"image.png\" alt=\"Image\"/></td></tr></table>",
+			translate("table-4.creole"));
+	}
+
+	@Test
+	public void testParseTableLinksNested() {
+		Assert.assertEquals(
+			"<table><tr><th>H1</th></tr><tr><td><a " +
+				"href=\"http://www.liferay.com \"> Liferay</a></td></tr>" +
+					"</table>",
+			translate("table-3.creole"));
 	}
 
 	@Test

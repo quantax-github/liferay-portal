@@ -14,6 +14,8 @@
 
 package com.liferay.portal.service;
 
+import aQute.bnd.annotation.ProviderType;
+
 /**
  * Provides a wrapper for {@link ThemeLocalService}.
  *
@@ -21,6 +23,7 @@ package com.liferay.portal.service;
  * @see ThemeLocalService
  * @generated
  */
+@ProviderType
 public class ThemeLocalServiceWrapper implements ThemeLocalService,
 	ServiceWrapper<ThemeLocalService> {
 	public ThemeLocalServiceWrapper(ThemeLocalService themeLocalService) {
@@ -87,6 +90,22 @@ public class ThemeLocalServiceWrapper implements ThemeLocalService,
 		long companyId, long groupId, long userId, boolean wapTheme)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return _themeLocalService.getThemes(companyId, groupId, userId, wapTheme);
+	}
+
+	@Override
+	public java.util.List<com.liferay.portal.model.Theme> getControlPanelThemes(
+		long companyId, long userId, boolean wapTheme)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _themeLocalService.getControlPanelThemes(companyId, userId,
+			wapTheme);
+	}
+
+	@Override
+	public java.util.List<com.liferay.portal.model.Theme> getPageThemes(
+		long companyId, long groupId, long userId, boolean wapTheme)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _themeLocalService.getPageThemes(companyId, groupId, userId,
+			wapTheme);
 	}
 
 	@Override

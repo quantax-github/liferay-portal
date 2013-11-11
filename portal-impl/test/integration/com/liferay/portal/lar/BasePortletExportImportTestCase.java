@@ -64,7 +64,7 @@ public class BasePortletExportImportTestCase extends BaseExportImportTestCase {
 		return null;
 	}
 
-	public String getPortletId() {
+	public String getPortletId() throws Exception {
 		return null;
 	}
 
@@ -82,7 +82,7 @@ public class BasePortletExportImportTestCase extends BaseExportImportTestCase {
 			group.getGroupId(), getStagedModelUuid(stagedModel),
 			getStagedModelUuid(relatedStagedModel2), 2);
 
-		doExportImportPortlet(getPortletId());
+		exportImportPortlet(getPortletId());
 
 		StagedModel importedStagedModel = getStagedModel(
 			getStagedModelUuid(stagedModel), importedGroup.getGroupId());
@@ -102,11 +102,11 @@ public class BasePortletExportImportTestCase extends BaseExportImportTestCase {
 
 		String stagedModelUuid = getStagedModelUuid(stagedModel);
 
-		doExportImportPortlet(getPortletId());
+		exportImportPortlet(getPortletId());
 
 		deleteStagedModel(stagedModel);
 
-		doExportImportPortlet(getPortletId());
+		exportImportPortlet(getPortletId());
 
 		StagedModel importedStagedModel = getStagedModel(
 			stagedModelUuid, importedGroup.getGroupId());
@@ -118,9 +118,9 @@ public class BasePortletExportImportTestCase extends BaseExportImportTestCase {
 
 		exportParameterMap.put(
 			PortletDataHandlerKeys.DELETIONS,
-			new String[]{ String.valueOf(true)});
+			new String[] {String.valueOf(true)});
 
-		doExportImportPortlet(
+		exportImportPortlet(
 			getPortletId(), exportParameterMap, getImportParameterMap());
 
 		importedStagedModel = getStagedModel(
@@ -133,9 +133,9 @@ public class BasePortletExportImportTestCase extends BaseExportImportTestCase {
 
 		importParameterMap.put(
 			PortletDataHandlerKeys.DELETIONS,
-			new String[]{ String.valueOf(true)});
+			new String[] {String.valueOf(true)});
 
-		doExportImportPortlet(
+		exportImportPortlet(
 			getPortletId(), exportParameterMap, importParameterMap);
 
 		try {
@@ -213,13 +213,13 @@ public class BasePortletExportImportTestCase extends BaseExportImportTestCase {
 		addParameter(parameterMap, getNamespace(), name, value);
 	}
 
-	protected void doExportImportPortlet(String portletId) throws Exception {
-		doExportImportPortlet(
+	protected void exportImportPortlet(String portletId) throws Exception {
+		exportImportPortlet(
 			portletId, new LinkedHashMap<String, String[]>(),
 			new LinkedHashMap<String, String[]>());
 	}
 
-	protected void doExportImportPortlet(
+	protected void exportImportPortlet(
 		String portletId, Map<String, String[]> exportParameterMap,
 		Map<String, String[]> importParameterMap) throws Exception {
 
@@ -247,15 +247,14 @@ public class BasePortletExportImportTestCase extends BaseExportImportTestCase {
 			TestPropsValues.getUserId(), this.layout, getPortletId(),
 			"column-1", preferenceMap);
 
-		doExportImportPortlet(portletId);
+		exportImportPortlet(portletId);
 
-		return LayoutTestUtil.getPortletPreferences(
-			importedLayout.getCompanyId(), importedLayout.getPlid(), portletId);
+		return LayoutTestUtil.getPortletPreferences(importedLayout, portletId);
 	}
 
 	protected void testExportImportAvailableLocales(
 			Locale[] sourceAvailableLocales, Locale[] targetAvailableLocales,
-			boolean fail)
+			boolean expectFailure)
 		throws Exception {
 
 		Portlet portlet = PortletLocalServiceUtil.getPortletById(
@@ -280,14 +279,14 @@ public class BasePortletExportImportTestCase extends BaseExportImportTestCase {
 			importedGroup.getGroupId(), targetAvailableLocales, null);
 
 		try {
-			doExportImportPortlet(getPortletId());
+			exportImportPortlet(getPortletId());
 
-			if (fail) {
+			if (expectFailure) {
 				Assert.fail();
 			}
 		}
 		catch (LocaleException le) {
-			if (!fail) {
+			if (!expectFailure) {
 				Assert.fail();
 			}
 		}

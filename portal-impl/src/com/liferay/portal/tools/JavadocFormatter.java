@@ -560,10 +560,7 @@ public class JavadocFormatter {
 		for (DocletTag paramDocletTag : paramDocletTags) {
 			String curValue = paramDocletTag.getValue();
 
-			if (!curValue.startsWith(name)) {
-				continue;
-			}
-			else {
+			if (curValue.equals(name) || curValue.startsWith(name + " ")) {
 				value = curValue;
 
 				break;
@@ -792,10 +789,7 @@ public class JavadocFormatter {
 
 		// Trim whitespace inside paragraph tags or in the first paragraph
 
-		Pattern pattern = Pattern.compile(
-			"(^.*?(?=\n\n|$)+|(?<=<p>\n).*?(?=\n</p>))", Pattern.DOTALL);
-
-		Matcher matcher = pattern.matcher(cdata);
+		Matcher matcher = _paragraphTagPattern.matcher(cdata);
 
 		StringBuffer sb = new StringBuffer();
 
@@ -1516,16 +1510,16 @@ public class JavadocFormatter {
 			if (samePackage) {
 				return !ancestorJavaMethod.isPrivate();
 			}
-			else {
-				if (ancestorJavaMethod.isProtected() ||
-					ancestorJavaMethod.isPublic()) {
 
-					return true;
-				}
-				else {
-					return false;
-				}
+			if (ancestorJavaMethod.isProtected() ||
+				ancestorJavaMethod.isPublic()) {
+
+				return true;
 			}
+			else {
+				return false;
+			}
+
 		}
 
 		return false;
@@ -1886,7 +1880,8 @@ public class JavadocFormatter {
 			}
 
 			if (line.startsWith(linePrefix)) {
-				sb.append(linePrefix + value);
+				sb.append(linePrefix);
+				sb.append(value);
 			}
 			else {
 				sb.append(line);
@@ -1966,6 +1961,8 @@ public class JavadocFormatter {
 	private Properties _languageProperties;
 	private File _languagePropertiesFile;
 	private String _outputFilePrefix;
+	private Pattern _paragraphTagPattern = Pattern.compile(
+		"(^.*?(?=\n\n|$)+|(?<=<p>\n).*?(?=\n</p>))", Pattern.DOTALL);
 	private boolean _updateJavadocs;
 
 }

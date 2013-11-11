@@ -1,6 +1,6 @@
 <definition>
 	<command name="addADTviaPortletPG">
-		<execute action="BasePortlet#click" locator-key1="OPTIONS_ICON" />
+		<execute action="BasePortlet#assertClick" locator-key1="OPTIONS_ICON" value1="Options" />
 		<execute action="BasePortlet#assertClick" locator-key1="OPTIONS_MENULIST_CONFIGURATION" value1="Configuration" />
 
 		<execute action="PGADTConfiguration#selectFrame" locator-key1="ADT_CONFIGURATION_IFRAME" />
@@ -33,7 +33,7 @@
 	</command>
 
 	<command name="addPG">
-		<execute action="BasePortlet#click" locator-key1="OPTIONS_ICON" />
+		<execute action="BasePortlet#assertClick" locator-key1="OPTIONS_ICON" value1="Options" />
 		<execute action="BasePortlet#assertClick" locator-key1="OPTIONS_MENULIST_CONFIGURATION" value1="Configuration" />
 
 		<execute action="PGADTConfiguration#selectFrame" locator-key1="ADT_CONFIGURATION_IFRAME" />
@@ -75,7 +75,7 @@
 	</command>
 
 	<command name="tearDownPG">
-		<execute action="BasePortlet#click" locator-key1="OPTIONS_ICON" />
+		<execute action="BasePortlet#assertClick" locator-key1="OPTIONS_ICON" value1="Options" />
 		<execute action="BasePortlet#assertClick" locator-key1="OPTIONS_MENULIST_CONFIGURATION" value1="Configuration" />
 
 		<execute action="PGADTConfiguration#selectFrame" locator-key1="ADT_CONFIGURATION_IFRAME" />
@@ -109,10 +109,10 @@
 		<execute macro="Page#gotoPG">
 			<var name="pageName" value="${pageName}" />
 		</execute>
-		<if> 
+		<if>
 			<condition action="BasePortlet#isElementPresent" locator-key1="OPTIONS_ICON" />
 			<then>
-				<execute action="BasePortlet#click" locator-key1="OPTIONS_ICON" />
+				<execute action="BasePortlet#assertClick" locator-key1="OPTIONS_ICON" value1="Options" />
 				<execute action="BasePortlet#assertClick" locator-key1="OPTIONS_MENULIST_CONFIGURATION" value1="Configuration" />
 
 				<execute action="PGADTConfiguration#selectFrame" locator-key1="ADT_CONFIGURATION_IFRAME" />
@@ -133,10 +133,10 @@
 	</command>
 
 	<command name="viewADTviaPortletPG">
-		<if> 
+		<if>
 			<condition action="BasePortlet#isElementPresent" locator-key1="OPTIONS_ICON" />
 			<then>
-				<execute action="BasePortlet#click" locator-key1="OPTIONS_ICON" />
+				<execute action="BasePortlet#assertClick" locator-key1="OPTIONS_ICON" value1="Options" />
 				<execute action="BasePortlet#assertClick" locator-key1="OPTIONS_MENULIST_CONFIGURATION" value1="Configuration" />
 
 				<execute action="PGADTConfiguration#selectFrame" locator-key1="ADT_CONFIGURATION_IFRAME" />

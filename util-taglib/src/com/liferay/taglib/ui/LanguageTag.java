@@ -15,6 +15,7 @@
 package com.liferay.taglib.ui;
 
 import com.liferay.portal.kernel.language.LanguageUtil;
+import com.liferay.portal.kernel.util.ArrayUtil;
 import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.WebKeys;
 import com.liferay.portal.theme.ThemeDisplay;
@@ -53,6 +54,10 @@ public class LanguageTag extends IncludeTag {
 		_formName = formName;
 	}
 
+	public void setLanguageId(String languageId) {
+		_languageId = languageId;
+	}
+
 	public void setLanguageIds(String[] languageIds) {
 		_languageIds = languageIds;
 	}
@@ -67,6 +72,7 @@ public class LanguageTag extends IncludeTag {
 		_displayStyle = LIST_ICON;
 		_formAction = null;
 		_formName = "fm";
+		_languageId = null;
 		_languageIds = null;
 		_name = "languageId";
 	}
@@ -85,10 +91,11 @@ public class LanguageTag extends IncludeTag {
 			"liferay-ui:language:displayStyle", String.valueOf(_displayStyle));
 		request.setAttribute("liferay-ui:language:formAction", _formAction);
 		request.setAttribute("liferay-ui:language:formName", _formName);
+		request.setAttribute("liferay-ui:language:languageId", _languageId);
 
 		Locale[] locales = null;
 
-		if ((_languageIds == null) || (_languageIds.length == 0)) {
+		if (ArrayUtil.isEmpty(_languageIds)) {
 			ThemeDisplay themeDisplay = (ThemeDisplay)request.getAttribute(
 				WebKeys.THEME_DISPLAY);
 
@@ -109,6 +116,7 @@ public class LanguageTag extends IncludeTag {
 	private int _displayStyle = LIST_ICON;
 	private String _formAction;
 	private String _formName = "fm";
+	private String _languageId;
 	private String[] _languageIds;
 	private String _name = "languageId";
 

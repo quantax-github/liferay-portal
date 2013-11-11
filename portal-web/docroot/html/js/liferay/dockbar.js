@@ -13,9 +13,15 @@ AUI.add(
 
 		var CSS_EDIT_LAYOUT_CONTENT = 'lfr-has-edit-layout';
 
+		var CSS_DOCKBAR_ITEM = 'dockbar-item';
+
 		var CSS_PREVIEW_CONTENT = 'lfr-has-device-preview';
 
 		var EVENT_CLICK = 'click';
+
+		var SELECTOR_NAV_ACCOUNT_CONTROLS = '.nav-account-controls';
+
+		var SELECTOR_NAV_ADD_CONTROLS = '.nav-add-controls';
 
 		var STR_ADD_PANEL = 'addPanel';
 
@@ -23,11 +29,11 @@ AUI.add(
 
 		var STR_PREVIEW_PANEL = 'previewPanel';
 
-		var TPL_ADD_CONTENT = '<div class="lfr-add-panel" id="{0}" />';
+		var TPL_ADD_CONTENT = '<div class="lfr-add-panel lfr-admin-panel" id="{0}" />';
 
-		var TPL_EDIT_LAYOUT_PANEL = '<div class="lfr-edit-layout-panel id="{0}" />';
+		var TPL_EDIT_LAYOUT_PANEL = '<div class="lfr-admin-panel lfr-edit-layout-panel" id="{0}" />';
 
-		var TPL_PREVIEW_PANEL = '<div class="lfr-device-preview-panel id="{0}" />';
+		var TPL_PREVIEW_PANEL = '<div class="lfr-admin-panel lfr-device-preview-panel" id="{0}" />';
 
 		var TPL_LOADING = '<div class="loading-animation" />';
 
@@ -47,13 +53,22 @@ AUI.add(
 					var eventHandle = dockBar.on(
 						['focus', 'mousemove', 'touchstart'],
 						function(event) {
+							var target = event.target;
+							var type = event.type;
+
 							Liferay.fire('initDockbar');
 
 							eventHandle.detach();
+
+							if (themeDisplay.isSignedIn() && !A.UA.touch) {
+								instance._initInteraction(target, type);
+							}
 						}
 					);
 
 					BODY.addClass('dockbar-ready');
+
+					Liferay.on(['noticeHide', 'noticeShow'], instance._toggleControlsOffset, instance);
 				}
 			},
 
@@ -109,21 +124,6 @@ AUI.add(
 				Dockbar._togglePanel(STR_EDIT_LAYOUT_PANEL);
 			},
 
-			_openWindow: function(config, item) {
-				if (item) {
-					A.mix(
-						config,
-						{
-							id: item.guid(),
-							title: item.attr('title'),
-							uri: item.attr('href')
-						}
-					);
-				}
-
-				Util.openWindow(config);
-			},
-
 			_registerPanels: function() {
 				var instance = this;
 
@@ -164,6 +164,28 @@ AUI.add(
 				instance._addContentNode.focusManager.refresh();
 			},
 
+			_toggleControlsOffset: function(event) {
+				if (!event.useAnimation) {
+					var instance = this;
+
+					var force = false;
+
+					if (event.type === 'noticeShow') {
+						force = true;
+					}
+
+					var namespace = instance._namespace;
+
+					var navAccountControls = A.one('#' + namespace + 'navAccountControls');
+
+					navAccountControls.toggleClass('nav-account-controls-notice', force);
+
+					var navAddControls = A.one('#' + namespace + 'navAddControls');
+
+					navAddControls.toggleClass('nav-add-controls-notice', force);
+				}
+			},
+
 			_togglePanel: function(panelId) {
 				var instance = this;
 
@@ -175,6 +197,8 @@ AUI.add(
 
 							if (item.node) {
 								item.node.hide();
+
+								BODY.detach('layoutControlsEsc|key');
 							}
 						}
 					}
@@ -191,14 +215,67 @@ AUI.add(
 
 					BODY.toggleClass(panel.css);
 
+					var panelDisplayEvent = 'dockbarHidePanel';
+					var panelVisible = false;
+
 					if (panelNode && BODY.hasClass(panel.css)) {
 						panel.showFn(panelId);
 
-						panelNode.show();
+						panelDisplayEvent = 'dockbarShowPanel';
+						panelVisible = true;
+
+						BODY.on(
+							'layoutControlsEsc|key',
+							function(event) {
+								if (panelId !== STR_PREVIEW_PANEL) {
+									instance._togglePanel(panelId);
+								}
+
+								var navAddControls = A.one('#' + instance._namespace + 'navAddControls');
+
+								if (navAddControls) {
+									var layoutControl;
+
+									if (panelId == STR_ADD_PANEL) {
+										layoutControl = navAddControls.one('.site-add-controls > a');
+									}
+									else if (panelId == STR_EDIT_LAYOUT_PANEL) {
+										layoutControl = navAddControls.one('.page-edit-controls > a');
+									}
+									else if (panelId == STR_PREVIEW_PANEL) {
+										layoutControl = navAddControls.one('.page-preview-controls > a');
+									}
+
+									if (layoutControl) {
+										layoutControl.focus();
+									}
+								}
+							},
+							'down:27'
+						);
 					}
-					else {
-						panelNode.hide();
+
+					Liferay.fire(
+						'dockbaraddpage:previewPageTitle',
+						{
+							data: {
+								hidden: true
+							}
+						}
+					);
+
+					Liferay.fire(
+						panelDisplayEvent,
+						{
+							id: panelId
+						}
+					);
+
+					if (!panelVisible) {
+						BODY.detach('layoutControlsEsc|key');
 					}
+
+					panelNode.toggle(panelVisible);
 				}
 			}
 		};
@@ -221,23 +298,102 @@ AUI.add(
 
 				instance._registerPanels();
 
-				var userAvatar = A.oneNS(namespace, '#userAvatar');
+				var btnNavigation = A.oneNS(namespace, '#navSiteNavigationNavbarBtn');
 
-				if (userAvatar) {
-					userAvatar.delegate(
+				var navigation = A.one(Liferay.Data.NAV_SELECTOR);
+
+				if (btnNavigation && navigation) {
+					btnNavigation.on(
 						EVENT_CLICK,
 						function(event) {
-							event.preventDefault();
-
-							instance._openWindow({}, event.currentTarget);
-						},
-						'a.use-dialog'
+							btnNavigation.toggleClass('open');
+							navigation.toggleClass('open');
+						}
 					);
 				}
 
 				Liferay.fire('dockbarLoaded');
 			},
 			['aui-io-request', 'liferay-node', 'liferay-store', 'node-focusmanager']
+		);
+
+		Liferay.provide(
+			Dockbar,
+			'_initInteraction',
+			function(target, type) {
+				var instance = this;
+
+				var dockBar = instance.dockBar;
+
+				var navAccountControls = dockBar.one(SELECTOR_NAV_ACCOUNT_CONTROLS);
+				var navAddControls = dockBar.one(SELECTOR_NAV_ADD_CONTROLS);
+
+				if (navAccountControls) {
+					var stagingBar = navAccountControls.one('.staging-bar');
+
+					if (stagingBar) {
+						stagingBar.all('> li').addClass(CSS_DOCKBAR_ITEM);
+					}
+
+					navAccountControls.all('> li > a').get('parentNode').addClass(CSS_DOCKBAR_ITEM);
+				}
+
+				if (BODY.hasClass('dockbar-split')) {
+					if (navAccountControls) {
+						navAccountControls.plug(Liferay.DockbarKeyboardInteraction);
+					}
+
+					if (navAddControls) {
+						navAddControls.plug(
+							A.Plugin.NodeFocusManager,
+							{
+								circular: true,
+								descendants: 'li a',
+								keys: {
+									next: 'down:39,40',
+									previous: 'down:37,38'
+								}
+							}
+						);
+
+						navAddControls.focusManager.after(
+							'focusedChange',
+							function(event) {
+								var instance = this;
+
+								if (!event.newVal) {
+									instance.set('activeDescendant', 0);
+								}
+							}
+						);
+					}
+				}
+				else if (navAddControls) {
+					var brand = dockBar.one('.brand');
+
+					if (brand) {
+						brand.all('a').get('parentNode').addClass(CSS_DOCKBAR_ITEM);
+					}
+
+					navAddControls.all('> li').addClass(CSS_DOCKBAR_ITEM);
+
+					dockBar.plug(Liferay.DockbarKeyboardInteraction);
+				}
+
+				if (type === 'focus') {
+					var navAccountControlsAncestor = target.ancestor(SELECTOR_NAV_ACCOUNT_CONTROLS);
+
+					var navLink = target;
+
+					if (navAccountControlsAncestor) {
+						navLink = navAccountControlsAncestor.one('li a');
+					}
+
+					navLink.blur();
+					navLink.focus();
+				}
+			},
+			['liferay-dockbar-keyboard-interaction', 'node-focusmanager']
 		);
 
 		Liferay.provide(

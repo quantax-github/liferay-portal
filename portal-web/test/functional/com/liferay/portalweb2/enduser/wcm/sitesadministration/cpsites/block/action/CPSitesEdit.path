@@ -20,7 +20,7 @@
 </tr>
 <tr>
 	<td>SUCCESS_MESSAGE</td>
-	<td>//div[@class='alert alert-success']</td>
+	<td>//div[contains(@class,'alert') and contains(@class,'alert-success')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -31,6 +31,11 @@
 <tr>
 	<td>SAVE_BUTTON</td>
 	<td>//button[contains(.,'Save')]</td>
+	<td></td>
+</tr>
+<tr>
+	<td>SITE_ID</td>
+	<td>//div[contains(@class,'control-group') and contains(@class,'field-wrapper')]/input</td>
 	<td></td>
 </tr>
 <tr>
@@ -47,6 +52,17 @@
 <tr>
 	<td>MEMBERSHIP_OPTIONS_MEMBERSHIP_MANAGEMENT_CHECKBOX</td>
 	<td>//input[@id='_165_manualMembershipCheckbox']</td>
+	<td></td>
+</tr>
+<tr>
+	<td></td>
+	<td></td>
+	<td></td>
+</tr>
+<!--PARENT_SITE-->
+<tr>
+	<td>PARENT_SITE_LIMIT_MEMBERSHIP_CHECKBOX</td>
+	<td>//input[@id='_165_membershipRestrictionCheckbox']</td>
 	<td></td>
 </tr>
 <tr>

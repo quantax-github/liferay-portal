@@ -206,18 +206,33 @@ public class FileImpl implements com.liferay.portal.kernel.util.File {
 	}
 
 	@Override
+	public File createTempFile(String prefix, String extension) {
+		return new File(createTempFileName(prefix, extension));
+	}
+
+	@Override
 	public String createTempFileName() {
-		return createTempFileName(null);
+		return createTempFileName(null, null);
 	}
 
 	@Override
 	public String createTempFileName(String extension) {
+		return createTempFileName(null, extension);
+	}
+
+	@Override
+	public String createTempFileName(String prefix, String extension) {
 		StringBundler sb = new StringBundler();
 
 		sb.append(SystemProperties.get(SystemProperties.TMP_DIR));
 		sb.append(StringPool.SLASH);
+
+		if (Validator.isNotNull(prefix)) {
+			sb.append(prefix);
+		}
+
 		sb.append(Time.getTimestamp());
-		sb.append(PwdGenerator.getPassword(PwdGenerator.KEY2, 8));
+		sb.append(PwdGenerator.getPassword(8, PwdGenerator.KEY2));
 
 		if (Validator.isFileExtension(extension)) {
 			sb.append(StringPool.PERIOD);
@@ -502,7 +517,8 @@ public class FileImpl implements com.liferay.portal.kernel.util.File {
 		int pos = fileName.lastIndexOf(CharPool.PERIOD);
 
 		if (pos > 0) {
-			return fileName.substring(pos + 1, fileName.length()).toLowerCase();
+			return StringUtil.toLowerCase(
+				fileName.substring(pos + 1, fileName.length()));
 		}
 		else {
 			return StringPool.BLANK;

@@ -23,7 +23,7 @@
 		<c:when test='<%= SessionMessages.contains(renderRequest, "requestProcessed") || ((selPlid == 0) && Validator.isNotNull(closeRedirect)) %>'>
 
 			<%
-			String refreshURL =null;
+			String refreshURL = null;
 
 			if ((selPlid == 0) && Validator.isNotNull(closeRedirect)) {
 				refreshURL = closeRedirect;
@@ -38,7 +38,7 @@
 			%>
 
 			<aui:script>
-				window.location.href = '<%= refreshURL %>';
+				window.location.href = '<%= HtmlUtil.escapeJS(refreshURL) %>';
 			</aui:script>
 		</c:when>
 		<c:otherwise>
@@ -76,7 +76,11 @@
 			<aui:script use="aui-io-request,aui-loading-mask-deprecated,liferay-dockbar">
 				A.one('#<portlet:namespace />closePanelEdit').on('click', Liferay.Dockbar.toggleEditLayoutPanel, Liferay.Dockbar);
 
-				A.one('#<portlet:namespace />name').focus();
+				var nameInput = A.one('#<portlet:namespace />name');
+
+				if (nameInput) {
+					nameInput.focus();
+				}
 
 				var loadingMask = A.getBody().plug(A.LoadingMask).loadingmask;
 

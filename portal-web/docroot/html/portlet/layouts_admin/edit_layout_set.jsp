@@ -66,7 +66,7 @@ String[][] categorySections = {mainSections};
 
 boolean hasExportImportLayoutsPermission = GroupPermissionUtil.contains(permissionChecker, liveGroupId, ActionKeys.EXPORT_IMPORT_LAYOUTS);
 
-boolean hasAddPageLayoutsPermission = !group.isLayoutPrototype() && GroupPermissionUtil.contains(permissionChecker, groupId, ActionKeys.ADD_LAYOUT);
+boolean hasAddPageLayoutsPermission = GroupPermissionUtil.contains(permissionChecker, groupId, ActionKeys.ADD_LAYOUT);
 
 boolean hasViewPagesPermission = (pagesCount > 0) && (liveGroup.isStaged() || selGroup.isLayoutSetPrototype() || selGroup.isStagingGroup() || portletName.equals(PortletKeys.MY_SITES) || portletName.equals(PortletKeys.GROUP_PAGES) || portletName.equals(PortletKeys.SITES_ADMIN) || portletName.equals(PortletKeys.USERS_ADMIN));
 %>
@@ -78,37 +78,22 @@ boolean hasViewPagesPermission = (pagesCount > 0) && (liveGroup.isStaged() || se
 <aui:nav-bar>
 	<aui:nav id="layoutsNav">
 		<c:if test="<%= hasViewPagesPermission %>">
-			<aui:nav-item data-value="view-pages" iconClass="icon-file" label="view-pages" />
+			<aui:nav-item data-value="view-pages" iconCssClass="icon-file" label="view-pages" />
 		</c:if>
 		<c:if test="<%= hasAddPageLayoutsPermission %>">
-			<aui:nav-item data-value="add-page" iconClass="icon-plus" label="add-page" />
+			<aui:nav-item data-value="add-page" iconCssClass="icon-plus" label="add-page" />
 		</c:if>
 		<c:if test="<%= hasExportImportLayoutsPermission %>">
-			<aui:nav-item data-value="export" iconClass="icon-arrow-down" label="export" />
-			<aui:nav-item data-value="import" iconClass="icon-arrow-up" label="import" />
+			<aui:nav-item data-value="export" iconCssClass="icon-arrow-down" label="export" />
+			<aui:nav-item data-value="import" iconCssClass="icon-arrow-up" label="import" />
 		</c:if>
 	</aui:nav>
 </aui:nav-bar>
 
 <c:if test="<%= liveGroup.isStaged() %>">
-	<liferay-ui:error exception="<%= RemoteExportException.class %>">
+	<%@ include file="/html/portlet/layouts_admin/error_auth_exception.jspf" %>
 
-		<%
-		RemoteExportException ree = (RemoteExportException)errorException;
-		%>
-
-		<c:if test="<%= ree.getType() == RemoteExportException.BAD_CONNECTION %>">
-			<%= LanguageUtil.format(pageContext, "could-not-connect-to-address-x.-please-verify-that-the-specified-port-is-correct-and-that-the-remote-server-is-configured-to-accept-requests-from-this-server", "<em>" + ree.getURL() + "</em>") %>
-		</c:if>
-
-		<c:if test="<%= ree.getType() == RemoteExportException.NO_GROUP %>">
-			<%= LanguageUtil.format(pageContext, "remote-group-with-id-x-does-not-exist", ree.getGroupId()) %>
-		</c:if>
-
-		<c:if test="<%= ree.getType() == RemoteExportException.NO_PERMISSIONS %>">
-			<liferay-ui:message arguments="<%= ree.getGroupId() %>" key="you-do-not-have-permissions-to-edit-the-site-with-id-x-on-the-remote-server" />
-		</c:if>
-	</liferay-ui:error>
+	<%@ include file="/html/portlet/layouts_admin/error_remote_export_exception.jspf" %>
 
 	<div class="alert alert-block">
 		<liferay-ui:message key="the-staging-environment-is-activated-changes-have-to-be-published-to-make-them-available-to-end-users" />
@@ -135,7 +120,7 @@ boolean hasViewPagesPermission = (pagesCount > 0) && (liveGroup.isStaged() || se
 		categoryNames="<%= _CATEGORY_NAMES %>"
 		categorySections="<%= categorySections %>"
 		jspPath="/html/portlet/layouts_admin/layout_set/"
-		showButtons="<%= GroupPermissionUtil.contains(permissionChecker, liveGroupId, ActionKeys.UPDATE) && SitesUtil.isLayoutSetPrototypeUpdateable(selLayoutSet) %>"
+		showButtons="<%= GroupPermissionUtil.contains(permissionChecker, groupId, ActionKeys.MANAGE_LAYOUTS) && SitesUtil.isLayoutSetPrototypeUpdateable(selLayoutSet) %>"
 	/>
 </aui:form>
 

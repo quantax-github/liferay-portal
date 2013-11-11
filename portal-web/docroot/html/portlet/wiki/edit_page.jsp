@@ -248,7 +248,7 @@ if (Validator.isNull(redirect)) {
 
 				<c:if test="<%= Validator.isNotNull(parentTitle) %>">
 					<aui:field-wrapper label="parent">
-						<%= HtmlUtil.escape(parentTitle) %>
+						<liferay-ui:input-resource url="<%= parentTitle %>" />
 					</aui:field-wrapper>
 				</c:if>
 
@@ -328,14 +328,7 @@ if (Validator.isNull(redirect)) {
 								FileEntry attachmentsFileEntry = attachmentsFileEntries.get(i);
 							%>
 
-								<portlet:resourceURL var="getPageAttachmentURL">
-									<portlet:param name="struts_action" value="/wiki/get_page_attachment" />
-									<portlet:param name="nodeId" value="<%= String.valueOf(node.getNodeId()) %>" />
-									<portlet:param name="title" value="<%= wikiPage.getTitle() %>" />
-									<portlet:param name="fileName" value="<%= attachmentsFileEntry.getTitle() %>" />
-								</portlet:resourceURL>
-
-								<aui:a href="<%= (templatePage != null) && (templatePage.getAttachmentsFileEntriesCount() > 0) ? getPageAttachmentURL : null %>"><%= attachmentsFileEntry.getTitle() %></aui:a> (<%= TextFormatter.formatStorageSize(attachmentsFileEntry.getSize(), locale) %>)<%= (i < (attachmentsFileEntries.size() - 1)) ? ", " : "" %>
+								<aui:a href="<%= (templatePage != null) && (templatePage.getAttachmentsFileEntriesCount() > 0) ? PortletFileRepositoryUtil.getPortletFileEntryURL(themeDisplay, attachmentsFileEntry, StringPool.BLANK) : null %>"><%= attachmentsFileEntry.getTitle() %></aui:a> (<%= TextFormatter.formatStorageSize(attachmentsFileEntry.getSize(), locale) %>)<%= (i < (attachmentsFileEntries.size() - 1)) ? ", " : "" %>
 
 							<%
 							}
@@ -446,7 +439,7 @@ if (Validator.isNull(redirect)) {
 
 					<aui:button name="previewButton" onClick='<%= renderResponse.getNamespace() + "previewPage();" %>' value="preview" />
 
-					<aui:button disabled="<%= pending %>" name="publishButton" onClick='<%= renderResponse.getNamespace() + "publishPage();" %>' value="<%= publishButtonLabel %>" />
+					<aui:button disabled="<%= pending %>" name="publishButton" onClick='<%= renderResponse.getNamespace() + "publishPage();" %>' primary="<%= true %>" value="<%= publishButtonLabel %>" />
 
 					<c:if test="<%= !newPage && WikiPagePermission.contains(permissionChecker, wikiPage, ActionKeys.DELETE) %>">
 						<c:choose>
@@ -508,12 +501,7 @@ if (Validator.isNull(redirect)) {
 	}
 
 	function <portlet:namespace />getSuggestionsContent() {
-		var content = '';
-
-		content += document.<portlet:namespace />fm.<portlet:namespace />title.value + ' ';
-		content += window.<portlet:namespace />editor.getHTML();
-
-		return content;
+		return document.<portlet:namespace />fm.<portlet:namespace />title.value + ' ' + window.<portlet:namespace />editor.getHTML();
 	}
 
 	function <portlet:namespace />moveToTrashPage() {

@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.GroupConstants;
 import com.liferay.portal.model.Layout;
@@ -39,6 +40,7 @@ import com.liferay.portal.util.TestPropsValues;
 import com.liferay.portal.util.UserTestUtil;
 import com.liferay.portlet.asset.NoSuchTagException;
 import com.liferay.portlet.asset.model.AssetTag;
+import com.liferay.portlet.asset.model.AssetTagConstants;
 import com.liferay.portlet.asset.service.AssetTagLocalServiceUtil;
 import com.liferay.portlet.blogs.model.BlogsEntry;
 import com.liferay.portlet.blogs.util.BlogsTestUtil;
@@ -161,7 +163,9 @@ public class AssetTagFinderTest {
 		Group siteGroup = scopeGroup.getParentGroup();
 
 		String assetTagName = ServiceTestUtil.randomString();
-		String[] assetTagProperties = new String[] {"key:value"};
+		String[] assetTagProperties = {
+			"key" + AssetTagConstants.PROPERTY_KEY_VALUE_SEPARATOR + "value"
+		};
 
 		int initialScopeGroupAssetTagsCount =
 			AssetTagFinderUtil.filterCountByG_N_P(
@@ -289,7 +293,8 @@ public class AssetTagFinderTest {
 				siteGroup.getGroupId(), assetTagName);
 
 			Assert.assertEquals(
-				assetTagName.toLowerCase(), siteGroupAssetTag.getName());
+				StringUtil.toLowerCase(
+					assetTagName), siteGroupAssetTag.getName());
 		}
 		finally {
 			PermissionThreadLocal.setPermissionChecker(
@@ -304,9 +309,11 @@ public class AssetTagFinderTest {
 		Group siteGroup = scopeGroup.getParentGroup();
 
 		String assetTagName = ServiceTestUtil.randomString();
-		String[] assetTagProperties = new String[] {"key:value"};
+		String[] assetTagProperties = {
+			"key" + AssetTagConstants.PROPERTY_KEY_VALUE_SEPARATOR + "value"
+		};
 
-		List<AssetTag> initialScopeGroupAssetTags=
+		List<AssetTag> initialScopeGroupAssetTags =
 			AssetTagFinderUtil.filterFindByG_N_P(
 				new long[] {scopeGroup.getGroupId()}, assetTagName,
 				assetTagProperties, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);

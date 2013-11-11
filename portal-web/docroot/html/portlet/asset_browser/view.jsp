@@ -30,14 +30,10 @@ portletURL.setParameter("groupId", String.valueOf(groupId));
 portletURL.setParameter("selectedGroupIds", StringUtil.merge(selectedGroupIds));
 portletURL.setParameter("refererAssetEntryId", String.valueOf(refererAssetEntryId));
 portletURL.setParameter("typeSelection", typeSelection);
+portletURL.setParameter("eventName", eventName);
 
 request.setAttribute("view.jsp-portletURL", portletURL);
 %>
-
-<liferay-util:include page="/html/portlet/asset_browser/toolbar.jsp">
-	<liferay-util:param name="groupId" value="<%= String.valueOf(groupId) %>" />
-	<liferay-util:param name="typeSelection" value="<%= typeSelection %>" />
-</liferay-util:include>
 
 <div class="asset-search">
 	<aui:form action="<%= portletURL %>" method="post" name="selectAssetFm">
@@ -46,9 +42,20 @@ request.setAttribute("view.jsp-portletURL", portletURL);
 		<liferay-ui:search-container
 			searchContainer="<%= new AssetSearch(renderRequest, portletURL) %>"
 		>
-			<liferay-ui:search-form
-				page="/html/portlet/asset_publisher/asset_search.jsp"
-			/>
+			<aui:nav-bar>
+				<aui:nav>
+					<liferay-util:include page="/html/portlet/asset_browser/toolbar.jsp">
+						<liferay-util:param name="groupId" value="<%= String.valueOf(groupId) %>" />
+						<liferay-util:param name="typeSelection" value="<%= typeSelection %>" />
+					</liferay-util:include>
+				</aui:nav>
+
+				<aui:nav-bar-search cssClass="pull-right">
+					<liferay-ui:search-form
+						page="/html/portlet/asset_publisher/asset_search.jsp"
+					/>
+				</aui:nav-bar-search>
+			</aui:nav-bar>
 
 			<%
 			AssetSearchTerms searchTerms = (AssetSearchTerms)searchContainer.getSearchTerms();
@@ -114,8 +121,8 @@ request.setAttribute("view.jsp-portletURL", portletURL);
 					value="<%= HtmlUtil.escape(group.getDescriptiveName(locale)) %>"
 				/>
 
-				<c:if test="<%= assetEntry.getEntryId() != refererAssetEntryId %>">
-					<liferay-ui:search-container-column-text>
+				<liferay-ui:search-container-column-text>
+					<c:if test="<%= assetEntry.getEntryId() != refererAssetEntryId %>">
 
 						<%
 						Map<String, Object> data = new HashMap<String, Object>();
@@ -124,12 +131,12 @@ request.setAttribute("view.jsp-portletURL", portletURL);
 						data.put("assetclassname", assetEntry.getClassName());
 						data.put("assettype", assetRendererFactory.getTypeName(locale, true));
 						data.put("assettitle", HtmlUtil.escape(assetEntry.getTitle(locale)));
-						data.put("groupname", HtmlUtil.escape(group.getDescriptiveName(locale)));
+						data.put("groupdescriptivename", HtmlUtil.escape(group.getDescriptiveName(locale)));
 						%>
 
 						<aui:button cssClass="selector-button" data="<%= data %>" value="choose" />
-					</liferay-ui:search-container-column-text>
-				</c:if>
+					</c:if>
+				</liferay-ui:search-container-column-text>
 
 			</liferay-ui:search-container-row>
 

@@ -29,6 +29,7 @@ import java.util.TreeMap;
 /**
  * @author Brian Wing Shun Chan
  * @author Raymond Augé
+ * @author Eduardo Lundgren
  */
 public class LocaleUtil {
 
@@ -65,6 +66,8 @@ public class LocaleUtil {
 	public static final Locale KOREA = Locale.KOREA;
 
 	public static final Locale KOREAN = Locale.KOREAN;
+
+	public static final Locale NETHERLANDS = new Locale("nl", "NL");
 
 	public static final Locale PORTUGAL = new Locale("pt", "PT");
 
@@ -150,6 +153,22 @@ public class LocaleUtil {
 		getInstance()._setDefault(userLanguage, userCountry, userVariant);
 	}
 
+	public static String toBCP47LanguageId(Locale locale) {
+		return getInstance()._toBCP47LanguageId(locale);
+	}
+
+	public static String toBCP47LanguageId(String languageId) {
+		return getInstance()._toBCP47LanguageId(languageId);
+	}
+
+	public static String[] toBCP47LanguageIds(Locale[] locales) {
+		return getInstance()._toBCP47LanguageIds(locales);
+	}
+
+	public static String[] toBCP47LanguageIds(String[] languageIds) {
+		return getInstance()._toBCP47LanguageIds(languageIds);
+	}
+
 	public static String[] toDisplayNames(Locale[] locales, Locale locale) {
 		return getInstance()._toDisplayNames(locales, locale);
 	}
@@ -186,7 +205,7 @@ public class LocaleUtil {
 		String languageId1 = _toLanguageId(locale1);
 		String languageId2 = _toLanguageId(locale2);
 
-		return languageId1.equalsIgnoreCase(languageId2);
+		return StringUtil.equalsIgnoreCase(languageId1, languageId2);
 	}
 
 	private Locale _fromLanguageId(String languageId, boolean validate) {
@@ -350,13 +369,14 @@ public class LocaleUtil {
 
 		if (language.length() > 3) {
 			language = locale.getLanguage();
-			language = language.toUpperCase();
+			language = StringUtil.toUpperCase(language);
 		}
 
 		String country = locale.getCountry();
 
 		return _getDisplayName(
-			language, country.toUpperCase(), locale, duplicateLanguages);
+			language, StringUtil.toUpperCase(country), locale,
+			duplicateLanguages);
 	}
 
 	private Locale _getSiteDefault() {
@@ -391,6 +411,37 @@ public class LocaleUtil {
 
 			_locale = new Locale(userLanguage, userCountry, userVariant);
 		}
+	}
+
+	private String _toBCP47LanguageId(Locale locale) {
+		return _toBCP47LanguageId(_toLanguageId(locale));
+	}
+
+	private String _toBCP47LanguageId(String languageId) {
+		if (languageId.equals("zh_CN")) {
+			return "zh-Hans-CN";
+		}
+		else if (languageId.equals("zh_TW")) {
+			return "zh-Hant-TW";
+		}
+		else {
+			return StringUtil.replace(
+				languageId, CharPool.UNDERLINE, CharPool.MINUS);
+		}
+	}
+
+	private String[] _toBCP47LanguageIds(Locale[] locales) {
+		return _toBCP47LanguageIds(_toLanguageIds(locales));
+	}
+
+	private String[] _toBCP47LanguageIds(String[] languageIds) {
+		String[] bcp47LanguageIds = new String[languageIds.length];
+
+		for (int i = 0; i < languageIds.length; i++) {
+			bcp47LanguageIds[i] = _toBCP47LanguageId(languageIds[i]);
+		}
+
+		return bcp47LanguageIds;
 	}
 
 	private String[] _toDisplayNames(Locale[] locales, Locale locale) {

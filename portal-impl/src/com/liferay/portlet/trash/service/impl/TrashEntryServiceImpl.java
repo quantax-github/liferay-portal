@@ -16,6 +16,7 @@ package com.liferay.portlet.trash.service.impl;
 
 import com.liferay.portal.TrashPermissionException;
 import com.liferay.portal.kernel.dao.orm.QueryUtil;
+import com.liferay.portal.kernel.dao.search.SearchPaginationUtil;
 import com.liferay.portal.kernel.exception.PortalException;
 import com.liferay.portal.kernel.exception.SystemException;
 import com.liferay.portal.kernel.log.Log;
@@ -255,22 +256,23 @@ public class TrashEntryServiceImpl extends TrashEntryServiceBaseImpl {
 			}
 		}
 
-		int filteredEntriesCount = filteredEntries.size();
+		int total = filteredEntries.size();
 
-		if ((end != QueryUtil.ALL_POS) && (start != QueryUtil.ALL_POS)) {
-			if (end > filteredEntriesCount) {
-				end = filteredEntriesCount;
-			}
-
-			if (start > filteredEntriesCount) {
-				start = filteredEntriesCount;
-			}
-
-			filteredEntries = filteredEntries.subList(start, end);
+		if ((start == QueryUtil.ALL_POS) && (end == QueryUtil.ALL_POS)) {
+			start = 0;
+			end = total;
 		}
 
+		int[] startAndEnd = SearchPaginationUtil.calculateStartAndEnd(
+			start, end, total);
+
+		start = startAndEnd[0];
+		end = startAndEnd[1];
+
+		filteredEntries = filteredEntries.subList(start, end);
+
 		trashEntriesList.setArray(TrashEntrySoap.toSoapModels(filteredEntries));
-		trashEntriesList.setCount(filteredEntriesCount);
+		trashEntriesList.setCount(total);
 
 		return trashEntriesList;
 	}
@@ -336,30 +338,24 @@ public class TrashEntryServiceImpl extends TrashEntryServiceBaseImpl {
 				TrashPermissionException.RESTORE);
 		}
 
-		if (trashHandler.isInTrash(classPK)) {
-			TrashEntry entry = trashEntryLocalService.getEntry(
-				className, classPK);
+		TrashEntry trashEntry = trashHandler.getTrashEntry(classPK);
 
+		if (trashEntry.isTrashEntry(className, classPK)) {
 			trashHandler.checkDuplicateTrashEntry(
-				entry, destinationContainerModelId, StringPool.BLANK);
-
-			trashHandler.moveTrashEntry(
-				getUserId(), classPK, destinationContainerModelId,
-				serviceContext);
+				trashEntry, destinationContainerModelId, StringPool.BLANK);
 		}
 		else {
 			trashHandler.checkDuplicateEntry(
 				classPK, destinationContainerModelId, StringPool.BLANK);
-
-			trashHandler.moveEntry(
-				getUserId(), classPK, destinationContainerModelId,
-				serviceContext);
 		}
+
+		trashHandler.moveTrashEntry(
+			getUserId(), classPK, destinationContainerModelId, serviceContext);
 	}
 
 	@Override
 	public TrashEntry restoreEntry(long entryId)
-			throws PortalException, SystemException {
+		throws PortalException, SystemException {
 
 		return restoreEntry(entryId, 0, null);
 	}

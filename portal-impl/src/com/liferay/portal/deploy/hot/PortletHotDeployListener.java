@@ -125,7 +125,10 @@ public class PortletHotDeployListener extends BaseHotDeployListener {
 		}
 		catch (Throwable t) {
 			throwHotDeployException(
-				hotDeployEvent, "Error registering portlets for ", t);
+				hotDeployEvent,
+				"Error registering portlets for " +
+					hotDeployEvent.getServletContextName(),
+				t);
 		}
 	}
 
@@ -138,7 +141,10 @@ public class PortletHotDeployListener extends BaseHotDeployListener {
 		}
 		catch (Throwable t) {
 			throwHotDeployException(
-				hotDeployEvent, "Error unregistering portlets for ", t);
+				hotDeployEvent,
+				"Error unregistering portlets for " +
+					hotDeployEvent.getServletContextName(),
+				t);
 		}
 	}
 
@@ -382,7 +388,6 @@ public class PortletHotDeployListener extends BaseHotDeployListener {
 						PHPPortlet.class.getName())) {
 
 					phpPortlet = true;
-
 				}
 
 				if (ClassUtil.isSubclass(
@@ -557,7 +562,7 @@ public class PortletHotDeployListener extends BaseHotDeployListener {
 			else {
 				_log.info(
 					portlets.size() + " portlets for " + servletContextName +
-						" was unregistered");
+						" were unregistered");
 			}
 		}
 	}
@@ -584,9 +589,10 @@ public class PortletHotDeployListener extends BaseHotDeployListener {
 
 			String attrCustomClass = entry.getValue();
 
+			Class<?> clazz = classLoader.loadClass(attrCustomClass);
+
 			CustomUserAttributes customUserAttributesInstance =
-				(CustomUserAttributes)classLoader.loadClass(
-					attrCustomClass).newInstance();
+				(CustomUserAttributes)clazz.newInstance();
 
 			portletContextBag.getCustomUserAttributes().put(
 				attrCustomClass, customUserAttributesInstance);

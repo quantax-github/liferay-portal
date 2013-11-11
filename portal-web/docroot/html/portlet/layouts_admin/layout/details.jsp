@@ -58,41 +58,25 @@ StringBuilder friendlyURLBase = new StringBuilder();
 		LayoutFriendlyURLException lfurle = (LayoutFriendlyURLException)errorException;
 		%>
 
-		<c:if test="<%= lfurle.getType() == LayoutFriendlyURLException.ADJACENT_SLASHES %>">
-			<liferay-ui:message key="please-enter-a-friendly-url-that-does-not-have-adjacent-slashes" />
-		</c:if>
+		<%@ include file="/html/portlet/layouts_admin/error_friendly_url_exception.jspf" %>
+	</liferay-ui:error>
 
-		<c:if test="<%= lfurle.getType() == LayoutFriendlyURLException.DOES_NOT_START_WITH_SLASH %>">
-			<liferay-ui:message key="please-enter-a-friendly-url-that-begins-with-a-slash" />
-		</c:if>
+	<liferay-ui:error exception="<%= LayoutFriendlyURLsException.class %>">
 
-		<c:if test="<%= lfurle.getType() == LayoutFriendlyURLException.DUPLICATE %>">
-			<liferay-ui:message key="please-enter-a-unique-friendly-url" />
-		</c:if>
+		<%
+		LayoutFriendlyURLsException lfurlse = (LayoutFriendlyURLsException)errorException;
 
-		<c:if test="<%= lfurle.getType() == LayoutFriendlyURLException.ENDS_WITH_SLASH %>">
-			<liferay-ui:message key="please-enter-a-friendly-url-that-does-not-end-with-a-slash" />
-		</c:if>
+		List<LayoutFriendlyURLException> layoutFriendlyURLExceptions = lfurlse.getLayoutFriendlyURLExceptions();
 
-		<c:if test="<%= lfurle.getType() == LayoutFriendlyURLException.INVALID_CHARACTERS %>">
-			<liferay-ui:message key="please-enter-a-friendly-url-with-valid-characters" />
-		</c:if>
+		for (LayoutFriendlyURLException lfurle : layoutFriendlyURLExceptions) {
+		%>
 
-		<c:if test="<%= lfurle.getType() == LayoutFriendlyURLException.KEYWORD_CONFLICT %>">
-			<%= LanguageUtil.format(pageContext, "please-enter-a-friendly-url-that-does-not-conflict-with-the-keyword-x", lfurle.getKeywordConflict()) %>
-		</c:if>
+			<%@ include file="/html/portlet/layouts_admin/error_friendly_url_exception.jspf" %>
 
-		<c:if test="<%= lfurle.getType() == LayoutFriendlyURLException.POSSIBLE_DUPLICATE %>">
-			<liferay-ui:message key="the-friendly-url-may-conflict-with-another-page" />
-		</c:if>
+		<%
+		}
+		%>
 
-		<c:if test="<%= lfurle.getType() == LayoutFriendlyURLException.TOO_DEEP %>">
-			<liferay-ui:message key="the-friendly-url-has-too-many-slashes" />
-		</c:if>
-
-		<c:if test="<%= lfurle.getType() == LayoutFriendlyURLException.TOO_SHORT %>">
-			<liferay-ui:message key="please-enter-a-friendly-url-that-is-at-least-two-characters-long" />
-		</c:if>
 	</liferay-ui:error>
 </c:if>
 
@@ -103,11 +87,13 @@ StringBuilder friendlyURLBase = new StringBuilder();
 		<c:when test="<%= !group.isLayoutPrototype() %>">
 			<aui:input name="name" />
 
-			<aui:input helpMessage="if-checked-this-page-wont-show-up-in-the-navigation-menu" label="hide-from-navigation-menu" name="hidden" />
+			<div class="control-group">
+				<aui:input helpMessage="if-checked-this-page-wont-show-up-in-the-navigation-menu" label="hide-from-navigation-menu" name="hidden" />
+			</div>
 
 			<c:choose>
 				<c:when test="<%= PortalUtil.isLayoutFriendliable(selLayout) %>">
-					<aui:field-wrapper cssClass="input-prepend input-append" helpMessage='<%= LanguageUtil.format(pageContext, "for-example-x", "<em>/news</em>") %>' label="friendly-url" name="friendlyURL">
+					<aui:field-wrapper cssClass="input-append input-flex-add-on input-prepend" helpMessage='<%= LanguageUtil.format(pageContext, "for-example-x", "<em>/news</em>") %>' label="friendly-url" name="friendlyURL">
 						<span class="add-on" id="<portlet:namespace />urlBase"><liferay-ui:message key="<%= StringUtil.shorten(friendlyURLBase.toString(), 40) %>" /></span>
 
 						<liferay-ui:input-localized availableLocales="<%= LanguageUtil.getAvailableLocales(themeDisplay.getSiteGroupId()) %>" cssClass="input-medium" name="friendlyURL" xml="<%= selLayout.getFriendlyURLsXML() %>" />
@@ -193,7 +179,9 @@ StringBuilder friendlyURLBase = new StringBuilder();
 					request.setAttribute(WebKeys.SEL_LAYOUT, selLayout);
 					%>
 
-					<liferay-util:include page="<%= StrutsUtil.TEXT_HTML_DIR + PortalUtil.getLayoutEditPage(curLayoutType) %>" />
+					<liferay-util:include page="<%= StrutsUtil.TEXT_HTML_DIR + PortalUtil.getLayoutEditPage(curLayoutType) %>">
+						<liferay-util:param name="idPrefix" value="details" />
+					</liferay-util:include>
 				</div>
 
 			<%

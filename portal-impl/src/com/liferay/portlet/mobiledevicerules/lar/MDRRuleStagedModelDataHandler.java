@@ -68,14 +68,14 @@ public class MDRRuleStagedModelDataHandler
 		MDRRuleGroup ruleGroup = MDRRuleGroupLocalServiceUtil.getRuleGroup(
 			rule.getRuleGroupId());
 
-		StagedModelDataHandlerUtil.exportStagedModel(
-			portletDataContext, ruleGroup);
+		StagedModelDataHandlerUtil.exportReferenceStagedModel(
+			portletDataContext, rule, ruleGroup,
+			PortletDataContext.REFERENCE_TYPE_PARENT);
 
 		Element ruleElement = portletDataContext.getExportDataElement(rule);
 
 		portletDataContext.addClassedModel(
-			ruleElement, ExportImportPathUtil.getModelPath(rule), rule,
-			MDRPortletDataHandler.NAMESPACE);
+			ruleElement, ExportImportPathUtil.getModelPath(rule), rule);
 	}
 
 	@Override
@@ -83,15 +83,9 @@ public class MDRRuleStagedModelDataHandler
 			PortletDataContext portletDataContext, MDRRule rule)
 		throws Exception {
 
-		String ruleGroupPath = ExportImportPathUtil.getModelPath(
-			portletDataContext, MDRRuleGroup.class.getName(),
+		StagedModelDataHandlerUtil.importReferenceStagedModel(
+			portletDataContext, rule, MDRRuleGroup.class,
 			rule.getRuleGroupId());
-
-		MDRRuleGroup ruleGroup =
-			(MDRRuleGroup)portletDataContext.getZipEntryAsObject(ruleGroupPath);
-
-		StagedModelDataHandlerUtil.importStagedModel(
-			portletDataContext, ruleGroup);
 
 		Map<Long, Long> ruleGroupIds =
 			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
@@ -101,7 +95,7 @@ public class MDRRuleStagedModelDataHandler
 			ruleGroupIds, rule.getRuleGroupId(), rule.getRuleGroupId());
 
 		ServiceContext serviceContext = portletDataContext.createServiceContext(
-			rule, MDRPortletDataHandler.NAMESPACE);
+			rule);
 
 		serviceContext.setUserId(
 			portletDataContext.getUserId(rule.getUserUuid()));
@@ -135,8 +129,7 @@ public class MDRRuleStagedModelDataHandler
 				serviceContext);
 		}
 
-		portletDataContext.importClassedModel(
-			rule, importedRule, MDRPortletDataHandler.NAMESPACE);
+		portletDataContext.importClassedModel(rule, importedRule);
 	}
 
 }

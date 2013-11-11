@@ -24,14 +24,15 @@ import com.liferay.portal.kernel.util.LocaleUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.SetUtil;
 import com.liferay.portal.kernel.util.Validator;
+import com.liferay.portal.kernel.workflow.WorkflowConstants;
 import com.liferay.portal.model.Image;
 import com.liferay.portal.service.ImageLocalServiceUtil;
 import com.liferay.portal.theme.ThemeDisplay;
 import com.liferay.portal.webserver.WebServerServletTokenUtil;
-import com.liferay.portlet.journal.NoSuchFolderException;
 import com.liferay.portlet.journal.model.JournalArticle;
 import com.liferay.portlet.journal.model.JournalArticleResource;
 import com.liferay.portlet.journal.model.JournalFolder;
+import com.liferay.portlet.journal.service.JournalArticleLocalServiceUtil;
 import com.liferay.portlet.journal.service.JournalArticleResourceLocalServiceUtil;
 import com.liferay.portlet.journal.service.JournalFolderLocalServiceUtil;
 import com.liferay.portlet.journal.util.LocaleTransformerListener;
@@ -56,6 +57,13 @@ public class JournalArticleImpl extends JournalArticleBaseImpl {
 	}
 
 	public JournalArticleImpl() {
+	}
+
+	@Override
+	public String buildTreePath() throws PortalException, SystemException {
+		JournalFolder folder = getFolder();
+
+		return folder.buildTreePath();
 	}
 
 	@Override
@@ -96,7 +104,7 @@ public class JournalArticleImpl extends JournalArticleBaseImpl {
 		Set<String> availableLanguageIds = SetUtil.fromArray(
 			super.getAvailableLanguageIds());
 
-		String[] contentAvailableLanguageIds=
+		String[] contentAvailableLanguageIds =
 			LocalizationUtil.getAvailableLanguageIds(getContent());
 
 		for (String availableLanguageId : contentAvailableLanguageIds) {
@@ -184,35 +192,22 @@ public class JournalArticleImpl extends JournalArticleBaseImpl {
 	}
 
 	@Override
-	public JournalFolder getTrashContainer()
-		throws PortalException, SystemException {
-
-		JournalFolder folder = null;
-
-		try {
-			folder = getFolder();
-		}
-		catch (NoSuchFolderException nsfe) {
-			return null;
-		}
-
-		if (folder.isInTrash()) {
-			return folder;
-		}
-
-		return folder.getTrashContainer();
+	public long getTrashEntryClassPK() {
+		return getResourcePrimKey();
 	}
 
 	@Override
-	public boolean isInTrashContainer()
-		throws PortalException, SystemException {
+	public boolean hasApprovedVersion() throws SystemException {
+		JournalArticle article =
+			JournalArticleLocalServiceUtil.fetchLatestArticle(
+				getGroupId(), getArticleId(),
+				WorkflowConstants.STATUS_APPROVED);
 
-		if (getTrashContainer() != null) {
-			return true;
-		}
-		else {
+		if (article == null) {
 			return false;
 		}
+
+		return true;
 	}
 
 	@Override

@@ -70,7 +70,9 @@ public class AssetEntryQuery {
 	}
 
 	public static String checkOrderByType(String orderByType) {
-		if ((orderByType == null) || orderByType.equalsIgnoreCase("DESC")) {
+		if ((orderByType == null) ||
+			StringUtil.equalsIgnoreCase(orderByType, "DESC")) {
+
 			return "DESC";
 		}
 		else {
@@ -643,7 +645,9 @@ public class AssetEntryQuery {
 				leftRightIds[3 * i + 2] = category.getRightCategoryId();
 			}
 			catch (Exception e) {
-				_log.warn("Error retrieving category " + categoryId);
+				if (_log.isWarnEnabled()) {
+					_log.warn("Error retrieving category " + categoryId);
+				}
 			}
 		}
 

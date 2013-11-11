@@ -63,13 +63,11 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-import org.powermock.api.mockito.PowerMockito;
-
 /**
  * @author Daniel Kocsis
  * @author Mate Thurzo
  */
-public abstract class BaseStagedModelDataHandlerTestCase extends PowerMockito {
+public abstract class BaseStagedModelDataHandlerTestCase {
 
 	@Before
 	public void setUp() throws Exception {
@@ -78,7 +76,10 @@ public abstract class BaseStagedModelDataHandlerTestCase extends PowerMockito {
 		liveGroup = GroupTestUtil.addGroup();
 		stagingGroup = GroupTestUtil.addGroup();
 
-		ServiceContextThreadLocal.pushServiceContext(new ServiceContext());
+		ServiceContext serviceContext = ServiceTestUtil.getServiceContext(
+			stagingGroup.getGroupId());
+
+		ServiceContextThreadLocal.pushServiceContext(serviceContext);
 	}
 
 	@After
@@ -207,10 +208,6 @@ public abstract class BaseStagedModelDataHandlerTestCase extends PowerMockito {
 
 	protected abstract Class<? extends StagedModel> getStagedModelClass();
 
-	protected String getStagedModelPath(long groupId, StagedModel stagedModel) {
-		return ExportImportPathUtil.getModelPath(stagedModel);
-	}
-
 	protected Date getStartDate() {
 		return new Date(System.currentTimeMillis() - Time.HOUR);
 	}
@@ -249,6 +246,13 @@ public abstract class BaseStagedModelDataHandlerTestCase extends PowerMockito {
 				getParameterMap(), userIdStrategy, zipReader);
 
 		portletDataContext.setImportDataRootElement(rootElement);
+
+		Group sourceCompanyGroup = GroupLocalServiceUtil.getCompanyGroup(
+			stagingGroup.getCompanyId());
+
+		portletDataContext.setSourceCompanyGroupId(
+			sourceCompanyGroup.getGroupId());
+
 		portletDataContext.setSourceGroupId(stagingGroup.getGroupId());
 
 		PortletImporter portletImporter = new PortletImporter();
@@ -258,8 +262,7 @@ public abstract class BaseStagedModelDataHandlerTestCase extends PowerMockito {
 	}
 
 	protected StagedModel readExportedStagedModel(StagedModel stagedModel) {
-		String stagedModelPath = getStagedModelPath(
-			stagingGroup.getGroupId(), stagedModel);
+		String stagedModelPath = ExportImportPathUtil.getModelPath(stagedModel);
 
 		StagedModel exportedStagedModel =
 			(StagedModel)portletDataContext.getZipEntryAsObject(
@@ -281,8 +284,8 @@ public abstract class BaseStagedModelDataHandlerTestCase extends PowerMockito {
 			return null;
 		}
 
-		ServiceContext serviceContext = ServiceTestUtil.getServiceContext(
-			stagingGroup.getGroupId());
+		ServiceContext serviceContext =
+			ServiceContextThreadLocal.getServiceContext();
 
 		AssetVocabulary assetVocabulary =
 			AssetVocabularyLocalServiceUtil.addVocabulary(
@@ -392,8 +395,8 @@ public abstract class BaseStagedModelDataHandlerTestCase extends PowerMockito {
 				while (iterator.hasNext()) {
 					StagedModel dependentStagedModel = iterator.next();
 
-					String dependentStagedModelPath = getStagedModelPath(
-						stagingGroup.getGroupId(), dependentStagedModel);
+					String dependentStagedModelPath =
+						ExportImportPathUtil.getModelPath(dependentStagedModel);
 
 					if (path.equals(dependentStagedModelPath)) {
 						iterator.remove();

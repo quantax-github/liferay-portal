@@ -105,9 +105,6 @@ public class PortletKeys {
 
 	public static final String JOURNAL_CONTENT_SEARCH = "77";
 
-	public static final String KNOWLEDGE_BASE_ADMIN =
-		"1_WAR_knowledgebaseportlet";
-
 	public static final String LANGUAGE = "82";
 
 	public static final String LAYOUT_PROTOTYPE = "146";
@@ -150,6 +147,8 @@ public class PortletKeys {
 	public static final String MY_WORKFLOW_INSTANCES = "158";
 
 	public static final String MY_WORKFLOW_TASKS = "153";
+
+	public static final String NAVIGATION = "71";
 
 	public static final String NESTED_PORTLETS = "118";
 

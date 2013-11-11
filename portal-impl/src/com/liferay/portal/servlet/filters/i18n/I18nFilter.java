@@ -130,7 +130,10 @@ public class I18nFilter extends BasePortalFilter {
 		LayoutSet layoutSet = (LayoutSet)request.getAttribute(
 			WebKeys.VIRTUAL_HOST_LAYOUT_SET);
 
-		if (layoutSet != null) {
+		if ((layoutSet != null) &&
+			requestURI.startsWith(
+				PropsValues.LAYOUT_FRIENDLY_URL_PUBLIC_SERVLET_MAPPING)) {
+
 			int[] groupFriendlyURLIndex = PortalUtil.getGroupFriendlyURLIndex(
 				requestURI);
 
@@ -202,10 +205,7 @@ public class I18nFilter extends BasePortalFilter {
 			guestLanguageId = defaultLanguageId;
 		}
 
-		if ((prependFriendlyUrlStyle == 1) ||
-			((prependFriendlyUrlStyle == 3) &&
-			 Validator.isNull(userLanguageId))) {
-
+		if (prependFriendlyUrlStyle == 1) {
 			if (!defaultLanguageId.equals(guestLanguageId)) {
 				return guestLanguageId;
 			}
@@ -217,21 +217,13 @@ public class I18nFilter extends BasePortalFilter {
 			return LocaleUtil.toLanguageId(PortalUtil.getLocale(request));
 		}
 		else if (prependFriendlyUrlStyle == 3) {
-			if (Validator.isNotNull(userLanguageId)) {
+			if (user != null) {
 				HttpSession session = request.getSession();
 
-				Locale locale = (Locale)session.getAttribute(
-					Globals.LOCALE_KEY);
-
-				if (!userLanguageId.equals(LocaleUtil.toLanguageId(locale))) {
-					PortalUtil.addUserLocaleOptionsMessage(request);
-
-					return LocaleUtil.toLanguageId(locale);
-				}
-				else {
-					return null;
-				}
+				session.setAttribute(Globals.LOCALE_KEY, user.getLocale());
 			}
+
+			return null;
 		}
 
 		return null;

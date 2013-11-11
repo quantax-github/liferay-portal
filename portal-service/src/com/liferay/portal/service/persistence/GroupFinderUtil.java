@@ -14,12 +14,15 @@
 
 package com.liferay.portal.service.persistence;
 
+import aQute.bnd.annotation.ProviderType;
+
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
 /**
  * @author Brian Wing Shun Chan
  */
+@ProviderType
 public class GroupFinderUtil {
 	public static int countByLayouts(long companyId, long parentGroupId,
 		boolean site)
@@ -79,6 +82,13 @@ public class GroupFinderUtil {
 		int start, int end, com.liferay.portal.kernel.util.OrderByComparator obc)
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return getFinder().findByCompanyId(companyId, params, start, end, obc);
+	}
+
+	public static java.util.List<java.lang.Long> findByC_P(long companyId,
+		long parentGroupId, long previousGroupId, int size)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return getFinder()
+				   .findByC_P(companyId, parentGroupId, previousGroupId, size);
 	}
 
 	public static com.liferay.portal.model.Group findByC_N(long companyId,

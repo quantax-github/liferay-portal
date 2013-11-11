@@ -189,6 +189,15 @@ public class FileEntryProxyBean
 	}
 
 	@Override
+	public FileVersion getLatestFileVersion(boolean trusted)
+		throws PortalException, SystemException {
+
+		FileVersion fileVersion = _fileEntry.getLatestFileVersion(trusted);
+
+		return newFileVersionProxyBean(fileVersion);
+	}
+
+	@Override
 	public Lock getLock() {
 		Lock lock = _fileEntry.getLock();
 
@@ -363,6 +372,16 @@ public class FileEntryProxyBean
 	@Override
 	public boolean isEscapedModel() {
 		return _fileEntry.isEscapedModel();
+	}
+
+	@Override
+	public boolean isInTrash() {
+		return _fileEntry.isInTrash();
+	}
+
+	@Override
+	public boolean isInTrashContainer() {
+		return _fileEntry.isInTrashContainer();
 	}
 
 	@Override

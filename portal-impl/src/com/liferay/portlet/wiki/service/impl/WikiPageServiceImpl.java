@@ -263,6 +263,16 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 	}
 
 	@Override
+	public WikiPage fetchPage(long nodeId, String title, double version)
+		throws PortalException, SystemException {
+
+		WikiPagePermission.check(
+			getPermissionChecker(), nodeId, title, version, ActionKeys.VIEW);
+
+		return wikiPageLocalService.fetchPage(nodeId, title, version);
+	}
+
+	@Override
 	public List<WikiPage> getChildren(
 			long groupId, long nodeId, boolean head, String parentTitle)
 		throws PortalException, SystemException {
@@ -586,13 +596,13 @@ public class WikiPageServiceImpl extends WikiPageServiceBaseImpl {
 	}
 
 	@Override
-	public void movePageToTrash(long nodeId, String title)
+	public WikiPage movePageToTrash(long nodeId, String title)
 		throws PortalException, SystemException {
 
 		WikiPagePermission.check(
 			getPermissionChecker(), nodeId, title, ActionKeys.DELETE);
 
-		wikiPageLocalService.movePageToTrash(getUserId(), nodeId, title);
+		return wikiPageLocalService.movePageToTrash(getUserId(), nodeId, title);
 	}
 
 	@Override

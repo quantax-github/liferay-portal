@@ -35,6 +35,12 @@ PortletURL portletURL = renderResponse.createRenderURL();
 
 portletURL.setParameter("struts_action", "/trash/view");
 portletURL.setParameter("tabs1", tabs1);
+
+PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, "recycle-bin"), portletURL.toString());
+
+if (Validator.isNotNull(keywords)) {
+	PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, "search") + ": " + keywords, currentURL);
+}
 %>
 
 <liferay-util:include page="/html/portlet/trash/restore_path.jsp" />
@@ -82,13 +88,6 @@ portletURL.setParameter("tabs1", tabs1);
 	/>
 </c:if>
 
-<c:if test="<%= Validator.isNotNull(keywords) %>">
-	<liferay-ui:header
-		backURL="<%= redirect %>"
-		title="search"
-	/>
-</c:if>
-
 <liferay-portlet:renderURL varImpl="searchURL">
 	<portlet:param name="struts_action" value="/trash/view" />
 </liferay-portlet:renderURL>
@@ -119,10 +118,6 @@ portletURL.setParameter("tabs1", tabs1);
 			TrashEntryList trashEntryList = TrashEntryServiceUtil.getEntries(groupId, searchContainer.getStart(), searchContainer.getEnd(), searchContainer.getOrderByComparator());
 
 			searchContainer.setTotal(trashEntryList.getCount());
-
-			if (searchContainer.isRecalculateCur()) {
-				trashEntryList = TrashEntryServiceUtil.getEntries(groupId, searchContainer.getStart(), searchContainer.getEnd(), searchContainer.getOrderByComparator());
-			}
 
 			results = TrashEntryImpl.toModels(trashEntryList.getArray());
 
@@ -177,7 +172,12 @@ portletURL.setParameter("tabs1", tabs1);
 		<liferay-ui:search-container-column-text
 			name="name"
 		>
-			<liferay-ui:icon label="<%= true %>" message="<%= HtmlUtil.escape(trashRenderer.getTitle(locale)) %>" src="<%= trashRenderer.getIconPath(renderRequest) %>" url="<%= viewContentURLString %>" />
+			<liferay-ui:icon
+				label="<%= true %>"
+				message="<%= HtmlUtil.escape(trashRenderer.getTitle(locale)) %>"
+				method="get" src="<%= trashRenderer.getIconPath(renderRequest) %>"
+				url="<%= viewContentURLString %>"
+			/>
 
 			<c:if test="<%= entry.getRootEntry() != null %>">
 
@@ -209,6 +209,7 @@ portletURL.setParameter("tabs1", tabs1);
 					<liferay-ui:icon
 						label="<%= true %>"
 						message="<%= rootTrashRenderer.getTitle(locale) %>"
+						method="get"
 						src="<%= rootTrashRenderer.getIconPath(renderRequest) %>"
 						url="<%= viewRootContentURLString %>"
 					/>
@@ -281,20 +282,20 @@ portletURL.setParameter("tabs1", tabs1);
 		<aui:input name="deleteTrashEntryIds" type="hidden" />
 		<aui:input name="restoreTrashEntryIds" type="hidden" />
 
-		<aui:button-row>
-			<liferay-ui:search-form
-				page="/html/portlet/trash/entry_search.jsp"
-			/>
-		</aui:button-row>
+		<liferay-ui:search-form
+			page="/html/portlet/trash/entry_search.jsp"
+		/>
 	</aui:form>
+
+	<liferay-ui:breadcrumb
+		showCurrentGroup="<%= false %>"
+		showCurrentPortlet="<%= true %>"
+		showGuestGroup="<%= false %>"
+		showLayout="<%= false %>"
+		showParentGroups="<%= false %>"
+	/>
 
 	<div class="separator"><!-- --></div>
 
 	<liferay-ui:search-iterator type='<%= approximate ? "more" : "regular" %>' />
 </liferay-ui:search-container>
-
-<%
-if (Validator.isNotNull(keywords)) {
-	PortalUtil.addPortletBreadcrumbEntry(request, LanguageUtil.get(pageContext, "search") + ": " + keywords, currentURL);
-}
-%>

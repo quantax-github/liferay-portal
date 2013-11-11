@@ -117,17 +117,17 @@ boolean showAddAction = ParamUtil.getBoolean(request, "showAddAction", true);
 
 <aui:nav-bar>
 	<aui:nav id="layoutsNav">
-		<c:if test="<%= LayoutPermissionUtil.contains(permissionChecker, selPlid, ActionKeys.ADD_LAYOUT) && PortalUtil.isLayoutParentable(selLayout.getType()) && SitesUtil.isLayoutSortable(selLayout) && showAddAction %>">
-			<aui:nav-item data-value="add-child-page" iconClass="icon-plus" label="add-child-page" />
+		<c:if test="<%= LayoutPermissionUtil.contains(permissionChecker, selPlid, ActionKeys.ADD_LAYOUT) && showAddAction %>">
+			<aui:nav-item data-value="add-child-page" iconCssClass="icon-plus" label="add-child-page" />
 		</c:if>
 		<c:if test="<%= LayoutPermissionUtil.contains(permissionChecker, selPlid, ActionKeys.PERMISSIONS) %>">
-			<aui:nav-item data-value="permissions" iconClass="icon-lock" label="permissions" />
+			<aui:nav-item data-value="permissions" iconCssClass="icon-lock" label="permissions" />
 		</c:if>
 		<c:if test="<%= LayoutPermissionUtil.contains(permissionChecker, selPlid, ActionKeys.DELETE) %>">
-			<aui:nav-item data-value="delete" iconClass="icon-remove" label="delete" />
+			<aui:nav-item data-value="delete" iconCssClass="icon-remove" label="delete" />
 		</c:if>
 		<c:if test="<%= LayoutPermissionUtil.contains(permissionChecker, selLayout, ActionKeys.UPDATE) %>">
-			<aui:nav-item data-value="copy-applications" iconClass="icon-list-alt" label="copy-applications" />
+			<aui:nav-item data-value="copy-applications" iconCssClass="icon-list-alt" label="copy-applications" />
 		</c:if>
 	</aui:nav>
 </aui:nav-bar>
@@ -140,7 +140,7 @@ boolean showAddAction = ParamUtil.getBoolean(request, "showAddAction", true);
 	<aui:input name="<%= Constants.CMD %>" type="hidden" />
 	<aui:input name="redirect" type="hidden" value='<%= HttpUtil.addParameter(redirectURL.toString(), liferayPortletResponse.getNamespace() + "selPlid", selPlid) %>' />
 	<aui:input name="closeRedirect" type="hidden" value="<%= closeRedirect %>" />
-	<aui:input name="groupId" type="hidden" value="<%= groupId %>" />
+	<aui:input name="groupId" type="hidden" value="<%= selGroup.getGroupId() %>" />
 	<aui:input name="liveGroupId" type="hidden" value="<%= liveGroupId %>" />
 	<aui:input name="stagingGroupId" type="hidden" value="<%= stagingGroupId %>" />
 	<aui:input name="selPlid" type="hidden" value="<%= selPlid %>" />
@@ -172,28 +172,19 @@ boolean showAddAction = ParamUtil.getBoolean(request, "showAddAction", true);
 		</c:when>
 		<c:otherwise>
 			<c:if test="<%= !group.isLayoutPrototype() && (selLayout != null) %>">
-				<c:if test="<%= liveGroup.isStaged() %>">
-					<liferay-ui:error exception="<%= RemoteExportException.class %>">
+				<c:if test="<%= selGroup.isStagingGroup() %>">
+					<%@ include file="/html/portlet/layouts_admin/error_auth_exception.jspf" %>
 
-						<%
-						RemoteExportException ree = (RemoteExportException)errorException;
-						%>
-
-						<c:if test="<%= ree.getType() == RemoteExportException.BAD_CONNECTION %>">
-							<%= LanguageUtil.format(pageContext, "could-not-connect-to-address-x.-please-verify-that-the-specified-port-is-correct-and-that-the-remote-server-is-configured-to-accept-requests-from-this-server", "<em>" + ree.getURL() + "</em>") %>
-						</c:if>
-
-						<c:if test="<%= ree.getType() == RemoteExportException.NO_GROUP %>">
-							<%= LanguageUtil.format(pageContext, "remote-group-with-id-x-does-not-exist", ree.getGroupId()) %>
-						</c:if>
-
-						<c:if test="<%= ree.getType() == RemoteExportException.NO_PERMISSIONS %>">
-							<liferay-ui:message arguments="<%= ree.getGroupId() %>" key="you-do-not-have-permissions-to-edit-the-site-with-id-x-on-the-remote-server" />
-						</c:if>
-					</liferay-ui:error>
+					<%@ include file="/html/portlet/layouts_admin/error_remote_export_exception.jspf" %>
 
 					<div class="alert alert-block">
 						<liferay-ui:message key="the-staging-environment-is-activated-changes-have-to-be-published-to-make-them-available-to-end-users" />
+					</div>
+				</c:if>
+
+				<c:if test="<%= selGroup.hasLocalOrRemoteStagingGroup() && !selGroup.isStagingGroup() %>">
+					<div class="alert alert-block">
+						<liferay-ui:message key="changes-are-immediately-available-to-end-users" />
 					</div>
 				</c:if>
 
@@ -300,8 +291,7 @@ boolean showAddAction = ParamUtil.getBoolean(request, "showAddAction", true);
 							popUp = Liferay.Util.Window.getWindow(
 								{
 									dialog: {
-										bodyContent: content.show(),
-										destroyOnHide: true
+										bodyContent: content.show()
 									},
 									title: '<%= UnicodeLanguageUtil.get(pageContext, "copy-applications") %>'
 								}

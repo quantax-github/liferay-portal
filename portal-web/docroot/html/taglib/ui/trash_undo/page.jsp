@@ -53,7 +53,7 @@ if (SessionMessages.contains(portletRequest, portletDisplay.getId() + SessionMes
 							<%
 							String trashURLString = HttpUtil.setParameter(trashURL.toString(), "doAsGroupId", String.valueOf(themeDisplay.getScopeGroupId()));
 
-							if (Validator.isNull(themeDisplay.getControlPanelCategory())) {
+							if (!layout.isTypeControlPanel() || Validator.isNull(themeDisplay.getControlPanelCategory())) {
 								trashURLString = HttpUtil.setParameter(trashURLString, "controlPanelCategory", "current_site");
 							}
 							%>
@@ -77,7 +77,7 @@ if (SessionMessages.contains(portletRequest, portletDisplay.getId() + SessionMes
 								<liferay-ui:message arguments="<%= new Object[] {trashedEntriesCount} %>" key="x-items-were-removed" />
 							</c:when>
 							<c:otherwise>
-								<liferay-ui:message arguments="<%= new Object[] {trashedEntriesCount, trashLink} %>" key="x-items-were-moved-to-x" />
+								<liferay-ui:message arguments="<%= new Object[] {trashedEntriesCount, trashLink.trim()} %>" key="x-items-were-moved-to-x" />
 							</c:otherwise>
 						</c:choose>
 					</c:when>
@@ -90,7 +90,7 @@ if (SessionMessages.contains(portletRequest, portletDisplay.getId() + SessionMes
 
 						String type = "selected-item";
 
-						if ((classNames != null) && (classNames.length > 0)) {
+						if (ArrayUtil.isNotEmpty(classNames)) {
 							className = classNames[0];
 
 							type = ResourceActionsUtil.getModelResource(pageContext, className);
@@ -100,7 +100,7 @@ if (SessionMessages.contains(portletRequest, portletDisplay.getId() + SessionMes
 
 						String title = StringPool.BLANK;
 
-						if ((titles != null) && (titles.length > 0)) {
+						if (ArrayUtil.isNotEmpty(titles)) {
 							title = titles[0];
 						}
 						%>
@@ -122,10 +122,10 @@ if (SessionMessages.contains(portletRequest, portletDisplay.getId() + SessionMes
 									}
 									%>
 
-									<em class="delete-entry-title"><aui:a href="<%= trashURLString %>" label="<%= title %>" /></em>
+									<em class="delete-entry-title"><aui:a href="<%= trashURLString %>" label="<%= HtmlUtil.escape(title) %>" /></em>
 								</c:when>
 								<c:when test="<%= Validator.isNotNull(title) %>">
-									<em class="delete-entry-title"><%= title %></em>
+									<em class="delete-entry-title"><%= HtmlUtil.escape(title) %></em>
 								</c:when>
 							</c:choose>
 						</liferay-util:buffer>

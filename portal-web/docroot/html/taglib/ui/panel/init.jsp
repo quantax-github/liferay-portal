@@ -23,6 +23,7 @@ String cssClass = GetterUtil.getString((String)request.getAttribute("liferay-ui:
 String defaultState = (String)request.getAttribute("liferay-ui:panel:defaultState");
 Boolean extended = (Boolean)request.getAttribute("liferay-ui:panel:extended");
 String helpMessage = (String)request.getAttribute("liferay-ui:panel:helpMessage");
+String iconCssClass = GetterUtil.getString((String)request.getAttribute("liferay-ui:panel:iconCssClass"));
 String id = (String)request.getAttribute("liferay-ui:panel:id");
 String parentId = (String)request.getAttribute("liferay-ui:panel:parentId");
 boolean persistState = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:panel:persistState"));
@@ -43,6 +44,8 @@ if (panelCount != null) {
 	}
 }
 
+cssClass += " lfr-panel";
+
 if ((extended != null) && extended) {
 	cssClass += " lfr-panel-extended";
 }
@@ -53,18 +56,22 @@ String headerCssClass = StringPool.BLANK;
 if (collapsible) {
 	contentCssClass += "toggler-content";
 	headerCssClass += "toggler-header";
-}
 
-if (state == null) {
-	state = GetterUtil.getString(SessionClicks.get(request, id, null), defaultState);
-}
+	if (BrowserSnifferUtil.isMobile(request)) {
+		state = "closed";
+	}
 
-if (state.equals("open")) {
-	contentCssClass += " toggler-content-expanded";
-	headerCssClass += " toggler-header-expanded";
-}
-else {
-	contentCssClass += " toggler-content-collapsed";
-	headerCssClass += " toggler-header-collapsed";
+	if (state == null) {
+		state = GetterUtil.getString(SessionClicks.get(request, id, null), defaultState);
+	}
+
+	if (state.equals("open")) {
+		contentCssClass += " toggler-content-expanded";
+		headerCssClass += " toggler-header-expanded";
+	}
+	else {
+		contentCssClass += " toggler-content-collapsed";
+		headerCssClass += " toggler-header-collapsed";
+	}
 }
 %>

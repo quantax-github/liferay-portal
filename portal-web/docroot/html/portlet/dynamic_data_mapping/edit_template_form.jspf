@@ -35,13 +35,13 @@ if (Validator.isNotNull(portletResourceNamespace)) {
 <aui:input name="scriptContent" type="hidden" />
 
 <aui:script>
-	window.<%= namespace %>getAvailableFields = function(A, FormBuilder) {
+	window["<%= HtmlUtil.escapeJS(namespace) %>getAvailableFields"] = function(A, FormBuilder) {
 		var availableFields = <%= scriptJSONArray.toString() %>;
 
 		A.Array.each(
 			availableFields,
 			function(item, index, collection) {
-				item.iconClass = FormBuilder.DEFAULT_ICON_CLASS;
+				item.iconCssClass = FormBuilder.DEFAULT_ICON_CLASS;
 			}
 		);
 
