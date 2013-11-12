@@ -19,7 +19,9 @@ import com.liferay.portal.kernel.json.JSONFactoryUtil;
 import com.liferay.portal.kernel.json.JSONObject;
 import com.liferay.portal.kernel.repository.model.FileEntry;
 import com.liferay.portal.kernel.repository.model.FileVersion;
+import com.liferay.portal.kernel.repository.model.Folder;
 import com.liferay.portal.kernel.util.CharPool;
+import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.StringBundler;
 import com.liferay.portal.kernel.util.StringPool;
@@ -33,6 +35,7 @@ import com.liferay.portal.model.BaseModel;
 import com.liferay.portal.model.CompanyConstants;
 import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.util.PortalUtil;
+import com.liferay.portlet.documentlibrary.NoSuchFolderException;
 import com.liferay.portlet.documentlibrary.model.DLFileEntryMetadata;
 import com.liferay.portlet.documentlibrary.model.DLFileVersion;
 import com.liferay.portlet.documentlibrary.model.DLFolderConstants;
@@ -48,8 +51,11 @@ import com.liferay.portlet.dynamicdatalists.model.DDLRecordVersion;
 import com.liferay.portlet.dynamicdatalists.service.DDLRecordLocalServiceUtil;
 import com.liferay.portlet.dynamicdatamapping.model.DDMStructure;
 import com.liferay.portlet.dynamicdatamapping.model.DDMStructureLink;
+import com.liferay.portlet.dynamicdatamapping.model.DDMTemplate;
+import com.liferay.portlet.dynamicdatamapping.model.DDMTemplateConstants;
 import com.liferay.portlet.dynamicdatamapping.service.DDMStructureLinkLocalServiceUtil;
 import com.liferay.portlet.dynamicdatamapping.service.DDMStructureLocalServiceUtil;
+import com.liferay.portlet.dynamicdatamapping.service.DDMTemplateLocalServiceUtil;
 import com.liferay.portlet.dynamicdatamapping.storage.Field;
 import com.liferay.portlet.dynamicdatamapping.storage.FieldConstants;
 import com.liferay.portlet.dynamicdatamapping.storage.Fields;
@@ -86,10 +92,7 @@ public class VerifyDynamicDataMapping extends VerifyProcess {
 		File file = DLStoreUtil.getFile(
 			companyId, CompanyConstants.SYSTEM, filePath);
 
-		ServiceContext serviceContext = new ServiceContext();
-
-		serviceContext.setAddGroupPermissions(true);
-		serviceContext.setAddGuestPermissions(true);
+		ServiceContext serviceContext = createServiceContext();
 
 		FileEntry fileEntry = DLAppLocalServiceUtil.addFileEntry(
 			userId, groupId, folderId, fileName, contentType, title,
@@ -98,6 +101,39 @@ public class VerifyDynamicDataMapping extends VerifyProcess {
 		updateFileEntryStatus(fileEntry, status, serviceContext);
 
 		return fileEntry;
+	}
+
+	protected Folder addFolder(
+			long userId, long groupId, long primaryKey, String fieldName)
+		throws Exception {
+
+		Folder ddmFolder = addFolder(
+			userId, groupId, DLFolderConstants.DEFAULT_PARENT_FOLDER_ID, "DDM",
+			StringPool.BLANK);
+
+		Folder primaryKeyFolder = addFolder(
+			userId, groupId, ddmFolder.getFolderId(),
+			String.valueOf(primaryKey), StringPool.BLANK);
+
+		return addFolder(
+			userId, groupId, primaryKeyFolder.getFolderId(), fieldName,
+			StringPool.BLANK);
+	}
+
+	protected Folder addFolder(
+			long userId, long groupId, long parentFolderId, String name,
+			String description)
+		throws Exception {
+
+		try {
+			return DLAppLocalServiceUtil.getFolder(
+				groupId, parentFolderId, name);
+		}
+		catch (NoSuchFolderException nsfe) {
+			return DLAppLocalServiceUtil.addFolder(
+				userId, groupId, parentFolderId, name, description,
+				createServiceContext());
+		}
 	}
 
 	protected boolean createDefaultMetadataElement(
@@ -122,12 +158,18 @@ public class VerifyDynamicDataMapping extends VerifyProcess {
 		return true;
 	}
 
+	protected ServiceContext createServiceContext() {
+		ServiceContext serviceContext = new ServiceContext();
+
+		serviceContext.setAddGroupPermissions(true);
+		serviceContext.setAddGuestPermissions(true);
+
+		return serviceContext;
+	}
+
 	@Override
 	protected void doVerify() throws Exception {
-		_ddlRecordSetClassNameId = PortalUtil.getClassNameId(
-			DDLRecordSet.class);
-		_dlFileEntryMetadataClassNameId = PortalUtil.getClassNameId(
-			DLFileEntryMetadata.class);
+		setUpClassNameIds();
 
 		List<DDMStructure> structures =
 			DDMStructureLocalServiceUtil.getStructures();
@@ -221,6 +263,15 @@ public class VerifyDynamicDataMapping extends VerifyProcess {
 		return false;
 	}
 
+	protected void setUpClassNameIds() {
+		_ddlRecordSetClassNameId = PortalUtil.getClassNameId(
+			DDLRecordSet.class);
+		_ddmStructureClassNameId = PortalUtil.getClassNameId(
+			DDMStructure.class);
+		_dlFileEntryMetadataClassNameId = PortalUtil.getClassNameId(
+			DLFileEntryMetadata.class);
+	}
+
 	protected void updateDDLFileUploadReferences(long ddlRecordSetId)
 		throws Exception {
 
@@ -303,9 +354,16 @@ public class VerifyDynamicDataMapping extends VerifyProcess {
 			updateFileUploadReferences(structureLink);
 		}
 
-		String xsd = updateXSD(structure.getXsd());
+		updateStructure(structure, updateXSD(structure.getXsd()));
 
-		updateStructure(structure, xsd);
+		List<DDMTemplate> templates = DDMTemplateLocalServiceUtil.getTemplates(
+			structure.getGroupId(), _ddmStructureClassNameId,
+			structure.getStructureId(),
+			DDMTemplateConstants.TEMPLATE_TYPE_FORM);
+
+		for (DDMTemplate template : templates) {
+			updateTemplate(template, updateXSD(template.getScript()));
+		}
 	}
 
 	protected void updateFileUploadReferences(DDMStructureLink structureLink)
@@ -337,6 +395,11 @@ public class VerifyDynamicDataMapping extends VerifyProcess {
 				continue;
 			}
 
+			long primaryKey = GetterUtil.getLong(baseModel.getPrimaryKeyObj());
+
+			Folder folder = addFolder(
+				userId, groupId, primaryKey, field.getName());
+
 			String valueString = String.valueOf(field.getValue());
 
 			JSONObject jsonObject = JSONFactoryUtil.createJSONObject(
@@ -347,8 +410,7 @@ public class VerifyDynamicDataMapping extends VerifyProcess {
 					field.getName();
 
 			FileEntry fileEntry = addFileEntry(
-				companyId, userId, groupId,
-				DLFolderConstants.DEFAULT_PARENT_FOLDER_ID,
+				companyId, userId, groupId, folder.getFolderId(),
 				jsonObject.getString("name"), filePath, status);
 
 			fieldValues.put(field.getName(), getJSON(fileEntry));
@@ -365,6 +427,16 @@ public class VerifyDynamicDataMapping extends VerifyProcess {
 		structure.setXsd(xsd);
 
 		DDMStructureLocalServiceUtil.updateDDMStructure(structure);
+	}
+
+	protected void updateTemplate(DDMTemplate template, String script)
+		throws Exception {
+
+		script = DDMXMLUtil.formatXML(script);
+
+		template.setScript(script);
+
+		DDMTemplateLocalServiceUtil.updateDDMTemplate(template);
 	}
 
 	protected String updateXSD(String xsd) throws Exception {
@@ -425,6 +497,7 @@ public class VerifyDynamicDataMapping extends VerifyProcess {
 	}
 
 	private long _ddlRecordSetClassNameId;
+	private long _ddmStructureClassNameId;
 	private long _dlFileEntryMetadataClassNameId;
 
 }

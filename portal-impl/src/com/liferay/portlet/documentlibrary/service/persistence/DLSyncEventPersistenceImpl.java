@@ -160,7 +160,7 @@ public class DLSyncEventPersistenceImpl extends BasePersistenceImpl<DLSyncEvent>
 
 		if ((list != null) && !list.isEmpty()) {
 			for (DLSyncEvent dlSyncEvent : list) {
-				if ((modifiedTime != dlSyncEvent.getModifiedTime())) {
+				if ((modifiedTime >= dlSyncEvent.getModifiedTime())) {
 					list = null;
 
 					break;
@@ -332,6 +332,10 @@ public class DLSyncEventPersistenceImpl extends BasePersistenceImpl<DLSyncEvent>
 	public DLSyncEvent fetchByModifiedTime_Last(long modifiedTime,
 		OrderByComparator orderByComparator) throws SystemException {
 		int count = countByModifiedTime(modifiedTime);
+
+		if (count == 0) {
+			return null;
+		}
 
 		List<DLSyncEvent> list = findByModifiedTime(modifiedTime, count - 1,
 				count, orderByComparator);
@@ -768,6 +772,10 @@ public class DLSyncEventPersistenceImpl extends BasePersistenceImpl<DLSyncEvent>
 	}
 
 	private static final String _FINDER_COLUMN_TYPEPK_TYPEPK_2 = "dlSyncEvent.typePK = ?";
+
+	public DLSyncEventPersistenceImpl() {
+		setModelClass(DLSyncEvent.class);
+	}
 
 	/**
 	 * Caches the d l sync event in the entity cache if it is enabled.

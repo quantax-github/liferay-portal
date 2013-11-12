@@ -14,6 +14,8 @@
 
 package com.liferay.portal.model;
 
+import aQute.bnd.annotation.ProviderType;
+
 import com.liferay.portal.kernel.util.Validator;
 
 import java.util.HashMap;
@@ -28,6 +30,7 @@ import java.util.Map;
  * @see Group
  * @generated
  */
+@ProviderType
 public class GroupWrapper implements Group, ModelWrapper<Group> {
 	public GroupWrapper(Group group) {
 		_group = group;
@@ -768,6 +771,17 @@ public class GroupWrapper implements Group, ModelWrapper<Group> {
 	}
 
 	@Override
+	public void updateTreePath(java.lang.String treePath)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		_group.updateTreePath(treePath);
+	}
+
+	@Override
+	public void clearStagingGroup() {
+		_group.clearStagingGroup();
+	}
+
+	@Override
 	public java.util.List<com.liferay.portal.model.Group> getAncestors()
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
@@ -822,6 +836,12 @@ public class GroupWrapper implements Group, ModelWrapper<Group> {
 	public java.lang.String getIconURL(
 		com.liferay.portal.theme.ThemeDisplay themeDisplay) {
 		return _group.getIconURL(themeDisplay);
+	}
+
+	@Override
+	public java.lang.String getLayoutRootNodeName(boolean privateLayout,
+		java.util.Locale locale) {
+		return _group.getLayoutRootNodeName(privateLayout, locale);
 	}
 
 	@Override
@@ -937,6 +957,11 @@ public class GroupWrapper implements Group, ModelWrapper<Group> {
 		return _group.hasStagingGroup();
 	}
 
+	@Override
+	public boolean isChild(long groupId) {
+		return _group.isChild(groupId);
+	}
+
 	/**
 	* @deprecated As of 6.1.0, renamed to {@link #isRegularSite}
 	*/
@@ -948,6 +973,11 @@ public class GroupWrapper implements Group, ModelWrapper<Group> {
 	@Override
 	public boolean isCompany() {
 		return _group.isCompany();
+	}
+
+	@Override
+	public boolean isCompanyStagingGroup() {
+		return _group.isCompanyStagingGroup();
 	}
 
 	@Override

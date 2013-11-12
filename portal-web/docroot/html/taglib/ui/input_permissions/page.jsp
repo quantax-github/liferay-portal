@@ -21,10 +21,7 @@ ServiceContext#deriveDefaultPermissions(long, String).
 
 --%>
 
-<%@ include file="/html/taglib/init.jsp" %>
-
-<%@ page import="com.liferay.portal.service.permission.RolePermissionUtil" %>
-<%@ page import="com.liferay.taglib.ui.InputPermissionsParamsTag" %>
+<%@ include file="/html/taglib/ui/input_permissions/init.jsp" %>
 
 <%
 String uniqueNamespace = namespace + PortalUtil.getUniqueElementId(request, namespace, StringPool.BLANK);
@@ -302,7 +299,7 @@ String modelName = (String)request.getAttribute("liferay-ui:input-permissions:mo
 					document.<%= formName %>.<%= namespace %>addUserPermissionsBox.checked = false;
 				}
 				else if (!document.<%= formName %>.<%= namespace %>addGroupPermissionsBox.checked &&
-						 !document.<%= formName %>.<%= namespace %>addGuestPermissionsBox.checked) {
+						!document.<%= formName %>.<%= namespace %>addGuestPermissionsBox.checked) {
 
 					document.<%= formName %>.<%= namespace %>addUserPermissionsBox.checked = true;
 				}

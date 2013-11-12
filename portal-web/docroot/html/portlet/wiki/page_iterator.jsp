@@ -108,7 +108,7 @@ if (type.equals("history") || type.equals("recent_changes")) {
 	headerNames.add("summary");
 }
 
-if (type.equals("all_pages") || type.equals("categorized_pages") || type.equals("draft_pages") || type.equals("history") || type.equals("orphan_pages") || type.equals("pending_pages") || type.equals("recent_changes") || type.equals("tagged_pages")) {
+if (type.equals("all_pages") || type.equals("categorized_pages") || type.equals("draft_pages") || type.equals("history") || type.equals("orphan_pages") || type.equals("recent_changes") || type.equals("tagged_pages")) {
 	headerNames.add(StringPool.BLANK);
 }
 
@@ -278,11 +278,11 @@ for (int i = 0; i < results.size(); i++) {
 	PortletURL rowURL = renderResponse.createRenderURL();
 
 	if (!curWikiPage.isNew() && !type.equals("draft_pages") && !type.equals("pending_pages")) {
-		if (portletName.equals(PortletKeys.WIKI)) {
-			rowURL.setParameter("struts_action", "/wiki/view");
+		if (portletName.equals(PortletKeys.WIKI_DISPLAY)) {
+			rowURL.setParameter("struts_action", "/wiki/view_page");
 		}
 		else {
-			rowURL.setParameter("struts_action", "/wiki/view_page_activities");
+			rowURL.setParameter("struts_action", "/wiki/view");
 		}
 
 		rowURL.setParameter("redirect", currentURL);

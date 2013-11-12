@@ -19,9 +19,9 @@
 <div class="portal-add-content">
 	<div class="control-panel-tools">
 		<div class="search-panels">
-			<div class="search-panels-bar">
-				<i class="icon-reorder search-panel-icon"></i>
+			<i class="icon-search"></i>
 
+			<div class="search-panels-bar">
 				<aui:input cssClass="search-panels-input search-query span12" label="" name="searchPanel" />
 			</div>
 		</div>
@@ -43,12 +43,25 @@
 		Map<String, List<Portlet>> siteAdministrationCategoriesMap = PortalUtil.getSiteAdministrationCategoriesMap(request);
 
 		for (String siteAdministrationCategory : siteAdministrationCategoriesMap.keySet()) {
-			String title = LanguageUtil.get(pageContext, "category." + siteAdministrationCategory);
+			String iconCssClass = "icon-file";
 
-			List<Portlet> portlets = siteAdministrationCategoriesMap.get(siteAdministrationCategory);
+			String panelPageCategoryId = "panel-manage-" + siteAdministrationCategory;
+
+			if (siteAdministrationCategory.equals(PortletCategoryKeys.SITE_ADMINISTRATION_CONFIGURATION)) {
+				iconCssClass = "icon-hdd";
+			}
+			else if (siteAdministrationCategory.equals(PortletCategoryKeys.SITE_ADMINISTRATION_CONTENT)) {
+				iconCssClass = "icon-file-text";
+			}
+			else if (siteAdministrationCategory.equals(PortletCategoryKeys.SITE_ADMINISTRATION_PAGES)) {
+				iconCssClass = "icon-sitemap";
+			}
+			else if (siteAdministrationCategory.equals(PortletCategoryKeys.SITE_ADMINISTRATION_USERS)) {
+				iconCssClass = "icon-group";
+			}
 		%>
 
-			<liferay-ui:panel collapsible="<%= true %>" cssClass="panel-page-category unstyled" extended="<%= true %>" id='<%= "panel-manage-" + siteAdministrationCategory %>' persistState="<%= true %>" state='<%= siteAdministrationCategory.equals(portletCategory) ? "open" : "closed" %>' title="<%= title %>">
+			<liferay-ui:panel collapsible="<%= true %>" cssClass="panel-page-category unstyled" extended="<%= true %>" iconCssClass="<%= iconCssClass %>" id="<%= panelPageCategoryId %>" persistState="<%= true %>" state='<%= siteAdministrationCategory.equals(portletCategory) ? "open" : "closed" %>' title='<%= LanguageUtil.get(pageContext, "category." + siteAdministrationCategory) %>'>
 				<c:if test="<%= siteAdministrationCategory.equals(PortletCategoryKeys.SITE_ADMINISTRATION_CONTENT) %>">
 
 					<%
@@ -103,14 +116,16 @@
 					</c:if>
 				</c:if>
 
-				<ul class="category-portlets">
+				<ul aria-labelledby="<%= panelPageCategoryId %>" class="category-portlets" role="menu">
 
 					<%
+					List<Portlet> portlets = siteAdministrationCategoriesMap.get(siteAdministrationCategory);
+
 					for (Portlet portlet : portlets) {
 						String portletId = portlet.getPortletId();
 					%>
 
-						<li class="<%= ppid.equals(portletId) ? "selected-portlet" : "" %>">
+						<li class="<%= ppid.equals(portletId) ? "selected-portlet" : "" %>" role="presentation">
 							<liferay-portlet:renderURL
 								doAsGroupId="<%= themeDisplay.getScopeGroupId() %>"
 								portletName="<%= portlet.getRootPortletId() %>"
@@ -118,7 +133,7 @@
 								windowState="<%= WindowState.MAXIMIZED.toString() %>"
 								/>
 
-							<a href="<%= portletURL %>" id="<portlet:namespace />portlet_<%= portletId %>">
+							<a href="<%= portletURL %>" id="<portlet:namespace />portlet_<%= portletId %>" role="menuitem">
 								<c:choose>
 									<c:when test="<%= Validator.isNull(portlet.getIcon()) %>">
 										<liferay-ui:icon src='<%= themeDisplay.getPathContext() + "/html/icons/default.png" %>' />

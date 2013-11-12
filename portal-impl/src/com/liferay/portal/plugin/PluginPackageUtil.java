@@ -680,7 +680,7 @@ public class PluginPackageUtil {
 				}
 			}
 
-			if ((bytes != null) && (bytes.length > 0)) {
+			if (ArrayUtil.isNotEmpty(bytes)) {
 				repository = _parseRepositoryXml(
 					new String(bytes), repositoryURL);
 
@@ -691,11 +691,10 @@ public class PluginPackageUtil {
 
 				return repository;
 			}
-			else {
-				_lastUpdateDate = new Date();
 
-				throw new PluginPackageException("Download returned 0 bytes");
-			}
+			_lastUpdateDate = new Date();
+
+			throw new PluginPackageException("Download returned 0 bytes");
 		}
 		catch (MalformedURLException murle) {
 			_repositoryCache.remove(repositoryURL);
@@ -841,7 +840,7 @@ public class PluginPackageUtil {
 		}
 
 		for (Element element : parentElement.elements(name)) {
-			String text = element.getText().trim().toLowerCase();
+			String text = StringUtil.toLowerCase(element.getText().trim());
 
 			list.add(text);
 		}
@@ -1300,7 +1299,6 @@ public class PluginPackageUtil {
 					"Unable to load repository " + repositoryURL + " " +
 						ppe.toString());
 			}
-
 		}
 
 		Indexer indexer = IndexerRegistryUtil.getIndexer(PluginPackage.class);

@@ -63,7 +63,7 @@ public abstract class BasePrototypePropagationTestCase extends PowerMockito {
 
 		Company company = CompanyUtil.fetchByPrimaryKey(group.getCompanyId());
 
-		globalGroupId = company.getGroup().getGroupId();
+		globalGroupId = company.getGroupId();
 
 		globalJournalArticle = JournalTestUtil.addArticle(
 			globalGroupId, "Global Article", "Global Content");
@@ -213,9 +213,9 @@ public abstract class BasePrototypePropagationTestCase extends PowerMockito {
 				"lfrScopeType", "company");
 		}
 
-		LayoutTestUtil.updatePortletPreferences(
-			prototypeLayout.getPlid(), journalContentPortletId,
-			layoutSetPrototypePortletPreferences);
+		layoutSetPrototypePortletPreferences.store();
+
+		layout = propagateChanges(layout);
 
 		PortletPreferences portletPreferences =
 			LayoutTestUtil.getPortletPreferences(

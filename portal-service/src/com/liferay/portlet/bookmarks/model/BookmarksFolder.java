@@ -14,7 +14,10 @@
 
 package com.liferay.portlet.bookmarks.model;
 
+import aQute.bnd.annotation.ProviderType;
+
 import com.liferay.portal.model.PermissionedModel;
+import com.liferay.portal.model.TreeModel;
 
 /**
  * The extended model interface for the BookmarksFolder service. Represents a row in the &quot;BookmarksFolder&quot; database table, with each column mapped to a property of this class.
@@ -25,7 +28,9 @@ import com.liferay.portal.model.PermissionedModel;
  * @see com.liferay.portlet.bookmarks.model.impl.BookmarksFolderModelImpl
  * @generated
  */
-public interface BookmarksFolder extends BookmarksFolderModel, PermissionedModel {
+@ProviderType
+public interface BookmarksFolder extends BookmarksFolderModel, PermissionedModel,
+	TreeModel {
 	/*
 	 * NOTE FOR DEVELOPERS:
 	 *
@@ -42,10 +47,6 @@ public interface BookmarksFolder extends BookmarksFolderModel, PermissionedModel
 	public com.liferay.portlet.bookmarks.model.BookmarksFolder getParentFolder()
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException;
-
-	public com.liferay.portlet.bookmarks.model.BookmarksFolder getTrashContainer();
-
-	public boolean isInTrashContainer();
 
 	public boolean isRoot();
 }

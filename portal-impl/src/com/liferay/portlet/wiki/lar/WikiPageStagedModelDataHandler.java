@@ -21,12 +21,18 @@ import com.liferay.portal.kernel.lar.ExportImportHelperUtil;
 import com.liferay.portal.kernel.lar.ExportImportPathUtil;
 import com.liferay.portal.kernel.lar.PortletDataContext;
 import com.liferay.portal.kernel.lar.StagedModelDataHandlerUtil;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.repository.model.FileEntry;
+import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.util.MimeTypesUtil;
 import com.liferay.portal.kernel.util.StreamUtil;
+import com.liferay.portal.kernel.util.Validator;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.service.ServiceContext;
+import com.liferay.portlet.documentlibrary.NoSuchFileException;
+import com.liferay.portlet.documentlibrary.lar.FileEntryUtil;
 import com.liferay.portlet.wiki.NoSuchPageException;
 import com.liferay.portlet.wiki.model.WikiNode;
 import com.liferay.portlet.wiki.model.WikiPage;
@@ -71,8 +77,9 @@ public class WikiPageStagedModelDataHandler
 
 		Element pageElement = portletDataContext.getExportDataElement(page);
 
-		StagedModelDataHandlerUtil.exportStagedModel(
-			portletDataContext, page.getNode());
+		StagedModelDataHandlerUtil.exportReferenceStagedModel(
+			portletDataContext, page, page.getNode(),
+			PortletDataContext.REFERENCE_TYPE_PARENT);
 
 		String content = ExportImportHelperUtil.replaceExportContentReferences(
 			portletDataContext, page, pageElement, page.getContent(),
@@ -83,18 +90,30 @@ public class WikiPageStagedModelDataHandler
 
 		if (page.isHead()) {
 			for (FileEntry fileEntry : page.getAttachmentsFileEntries()) {
-				StagedModelDataHandlerUtil.exportStagedModel(
-					portletDataContext, fileEntry);
-
-				portletDataContext.addReferenceElement(
-					page, pageElement, fileEntry, FileEntry.class,
-					PortletDataContext.REFERENCE_TYPE_WEAK, false);
+				StagedModelDataHandlerUtil.exportReferenceStagedModel(
+					portletDataContext, page, WikiPage.class, fileEntry,
+					FileEntry.class, PortletDataContext.REFERENCE_TYPE_WEAK);
 			}
 		}
 
 		portletDataContext.addClassedModel(
-			pageElement, ExportImportPathUtil.getModelPath(page), page,
-			WikiPortletDataHandler.NAMESPACE);
+			pageElement, ExportImportPathUtil.getModelPath(page), page);
+	}
+
+	@Override
+	protected void doImportCompanyStagedModel(
+			PortletDataContext portletDataContext, String uuid, long pageId)
+		throws Exception {
+
+		WikiPage existingPage =
+			WikiPageLocalServiceUtil.fetchWikiPageByUuidAndGroupId(
+				uuid, portletDataContext.getCompanyGroupId());
+
+		Map<Long, Long> pageIds =
+			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
+				WikiPage.class);
+
+		pageIds.put(pageId, existingPage.getPageId());
 	}
 
 	@Override
@@ -104,13 +123,8 @@ public class WikiPageStagedModelDataHandler
 
 		long userId = portletDataContext.getUserId(page.getUserUuid());
 
-		String nodePath = ExportImportPathUtil.getModelPath(
-			portletDataContext, WikiNode.class.getName(), page.getNodeId());
-
-		WikiNode node = (WikiNode)portletDataContext.getZipEntryAsObject(
-			nodePath);
-
-		StagedModelDataHandlerUtil.importStagedModel(portletDataContext, node);
+		StagedModelDataHandlerUtil.importReferenceStagedModel(
+			portletDataContext, page, WikiNode.class, page.getNodeId());
 
 		Element pageElement =
 			portletDataContext.getImportDataStagedModelElement(page);
@@ -123,7 +137,7 @@ public class WikiPageStagedModelDataHandler
 		page.setContent(content);
 
 		ServiceContext serviceContext = portletDataContext.createServiceContext(
-			page, WikiPortletDataHandler.NAMESPACE);
+			page);
 
 		Map<Long, Long> nodeIds =
 			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
@@ -171,7 +185,6 @@ public class WikiPageStagedModelDataHandler
 
 			for (Element attachmentElement : attachmentElements) {
 				String path = attachmentElement.attributeValue("path");
-				String binPath = attachmentElement.attributeValue("bin-path");
 
 				FileEntry fileEntry =
 					(FileEntry)portletDataContext.getZipEntryAsObject(path);
@@ -180,19 +193,37 @@ public class WikiPageStagedModelDataHandler
 				String mimeType = null;
 
 				try {
-					inputStream = portletDataContext.getZipEntryAsInputStream(
-						binPath);
+					String binPath = attachmentElement.attributeValue(
+						"bin-path");
+
+					if (Validator.isNull(binPath) &&
+						portletDataContext.isPerformDirectBinaryImport()) {
+
+						try {
+							inputStream = FileEntryUtil.getContentStream(
+								fileEntry);
+						}
+						catch (NoSuchFileException nsfe) {
+						}
+					}
+					else {
+						inputStream =
+							portletDataContext.getZipEntryAsInputStream(
+								binPath);
+					}
+
+					if (inputStream == null) {
+						if (_log.isWarnEnabled()) {
+							_log.warn(
+								"Unable to import attachment for file entry " +
+									fileEntry.getFileEntryId());
+						}
+
+						continue;
+					}
 
 					mimeType = MimeTypesUtil.getContentType(
 						inputStream, fileEntry.getTitle());
-				}
-				finally {
-					StreamUtil.cleanUp(inputStream);
-				}
-
-				try {
-					inputStream = portletDataContext.getZipEntryAsInputStream(
-						binPath);
 
 					WikiPageLocalServiceUtil.addPageAttachment(
 						userId, importedPage.getNodeId(),
@@ -205,8 +236,33 @@ public class WikiPageStagedModelDataHandler
 			}
 		}
 
-		portletDataContext.importClassedModel(
-			page, importedPage, WikiPortletDataHandler.NAMESPACE);
+		portletDataContext.importClassedModel(page, importedPage);
 	}
+
+	@Override
+	protected void doRestoreStagedModel(
+			PortletDataContext portletDataContext, WikiPage page)
+		throws Exception {
+
+		long userId = portletDataContext.getUserId(page.getUserUuid());
+
+		WikiPage existingPage =
+			WikiPageLocalServiceUtil.fetchWikiPageByUuidAndGroupId(
+				page.getUuid(), portletDataContext.getScopeGroupId());
+
+		if ((existingPage == null) || !existingPage.isInTrash()) {
+			return;
+		}
+
+		TrashHandler trashHandler = existingPage.getTrashHandler();
+
+		if (trashHandler.isRestorable(existingPage.getResourcePrimKey())) {
+			trashHandler.restoreTrashEntry(
+				userId, existingPage.getResourcePrimKey());
+		}
+	}
+
+	private static Log _log = LogFactoryUtil.getLog(
+		WikiPageStagedModelDataHandler.class);
 
 }

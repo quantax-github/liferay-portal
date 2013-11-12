@@ -75,8 +75,9 @@ public class MDRRuleGroupInstanceStagedModelDataHandler
 		MDRRuleGroup ruleGroup = MDRRuleGroupLocalServiceUtil.getRuleGroup(
 			ruleGroupInstance.getRuleGroupId());
 
-		StagedModelDataHandlerUtil.exportStagedModel(
-			portletDataContext, ruleGroup);
+		StagedModelDataHandlerUtil.exportReferenceStagedModel(
+			portletDataContext, ruleGroupInstance, ruleGroup,
+			PortletDataContext.REFERENCE_TYPE_PARENT);
 
 		Element ruleGroupInstanceElement =
 			portletDataContext.getExportDataElement(ruleGroupInstance);
@@ -94,7 +95,7 @@ public class MDRRuleGroupInstanceStagedModelDataHandler
 		portletDataContext.addClassedModel(
 			ruleGroupInstanceElement,
 			ExportImportPathUtil.getModelPath(ruleGroupInstance),
-			ruleGroupInstance, MDRPortletDataHandler.NAMESPACE);
+			ruleGroupInstance);
 	}
 
 	@Override
@@ -106,15 +107,9 @@ public class MDRRuleGroupInstanceStagedModelDataHandler
 		long userId = portletDataContext.getUserId(
 			ruleGroupInstance.getUserUuid());
 
-		String ruleGroupPath = ExportImportPathUtil.getModelPath(
-			portletDataContext, MDRRuleGroup.class.getName(),
+		StagedModelDataHandlerUtil.importReferenceStagedModel(
+			portletDataContext, ruleGroupInstance, MDRRuleGroup.class,
 			ruleGroupInstance.getRuleGroupId());
-
-		MDRRuleGroup ruleGroup =
-			(MDRRuleGroup)portletDataContext.getZipEntryAsObject(ruleGroupPath);
-
-		StagedModelDataHandlerUtil.importStagedModel(
-			portletDataContext, ruleGroup);
 
 		Map<Long, Long> ruleGroupIds =
 			(Map<Long, Long>)portletDataContext.getNewPrimaryKeysMap(
@@ -167,7 +162,7 @@ public class MDRRuleGroupInstanceStagedModelDataHandler
 		}
 
 		ServiceContext serviceContext = portletDataContext.createServiceContext(
-			ruleGroupInstance, MDRPortletDataHandler.NAMESPACE);
+			ruleGroupInstance);
 
 		serviceContext.setUserId(userId);
 
@@ -207,8 +202,7 @@ public class MDRRuleGroupInstanceStagedModelDataHandler
 		}
 
 		portletDataContext.importClassedModel(
-			ruleGroupInstance, importedRuleGroupInstance,
-			MDRPortletDataHandler.NAMESPACE);
+			ruleGroupInstance, importedRuleGroupInstance);
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(

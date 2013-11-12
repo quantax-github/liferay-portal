@@ -30,11 +30,11 @@ headerNames.add(StringPool.BLANK);
 
 SearchContainer searchContainer = new SearchContainer(renderRequest, null, null, SearchContainer.DEFAULT_CUR_PARAM, SearchContainer.DEFAULT_DELTA, portletURL, headerNames, null);
 
-int total = WikiNodeLocalServiceUtil.getNodesCount(scopeGroupId);
+int total = WikiNodeServiceUtil.getNodesCount(scopeGroupId);
 
 searchContainer.setTotal(total);
 
-List results = WikiNodeLocalServiceUtil.getNodes(scopeGroupId, searchContainer.getStart(), searchContainer.getEnd());
+List results = WikiNodeServiceUtil.getNodes(scopeGroupId, searchContainer.getStart(), searchContainer.getEnd());
 
 searchContainer.setResults(results);
 %>
@@ -77,7 +77,7 @@ searchContainer.setResults(results);
 
 		// Number of pages
 
-		int pagesCount = WikiPageLocalServiceUtil.getPagesCount(node.getNodeId(), true);
+		int pagesCount = WikiPageServiceUtil.getPagesCount(scopeGroupId, node.getNodeId(), true);
 
 		row.addText(String.valueOf(pagesCount), rowURL);
 
@@ -122,9 +122,10 @@ searchContainer.setResults(results);
 						modelResourceDescription="<%= HtmlUtil.escape(themeDisplay.getScopeGroupName()) %>"
 						resourcePrimKey="<%= String.valueOf(scopeGroupId) %>"
 						var="permissionsURL"
+						windowState="<%= LiferayWindowState.POP_UP.toString() %>"
 					/>
 
-					<aui:button href="<%= permissionsURL %>" name="permissionsButton" value="permissions" />
+					<aui:button href="<%= permissionsURL %>" name="permissionsButton" useDialog="<%= true %>" value="permissions" />
 				</c:if>
 			</aui:button-row>
 		</c:if>

@@ -44,33 +44,57 @@
 
 	<target name="build-sql-file">
 		<if>
-			<not>
-				<isset property="sql.legacy.zip" />
-			</not>
-			<then>
-				<fail>Please set "sql.legacy.zip" in test.properties to point to the legacy SQL ZIP file.</fail>
-			</then>
-		</if>
-
-		<if>
-			<not>
-				<and>
-					<available file="sql/legacy" />
-					<uptodate
-						srcfile="${sql.legacy.zip}"
-						targetfile="sql/legacy"
-					/>
-				</and>
-			</not>
+			<isset property="sql.legacy.url" />
 			<then>
 				<delete dir="sql/legacy" failonerror="false" />
 
-				<unzip src="${sql.legacy.zip}" dest="sql" />
+				<tstamp>
+					<format property="tstamp.value" pattern="yyyyMMddkkmmssSSS" />
+				</tstamp>
 
-				<touch>
-					<fileset dir="sql/legacy" />
-				</touch>
+				<get
+					dest="${tstamp.value}.zip"
+					src="${sql.legacy.url}"
+				/>
+
+				<unzip
+					dest="sql"
+					src="${tstamp.value}.zip"
+				/>
+
+				<delete file="${tstamp.value}.zip" />
 			</then>
+			<else>
+				<if>
+					<not>
+						<isset property="sql.legacy.zip" />
+					</not>
+					<then>
+						<fail>Please set "sql.legacy.zip" in test.properties to point to the legacy SQL ZIP file.</fail>
+					</then>
+				</if>
+
+				<if>
+					<not>
+						<and>
+							<available file="sql/legacy" />
+							<uptodate
+								srcfile="${sql.legacy.zip}"
+								targetfile="sql/legacy"
+							/>
+						</and>
+					</not>
+					<then>
+						<delete dir="sql/legacy" failonerror="false" />
+
+						<unzip src="${sql.legacy.zip}" dest="sql" />
+
+						<touch>
+							<fileset dir="sql/legacy" />
+						</touch>
+					</then>
+				</if>
+			</else>
 		</if>
 
 		<if>
@@ -88,17 +112,8 @@
 						</not>
 					</or>
 					<then>
-						<if>
-							<isset property="test.database.minimal" />
-							<then>
-								<property name="sql.dir" value="sql\create-minimal\" />
-								<property name="sql.file" value="create-minimal-${database.family}.sql" />
-							</then>
-							<else>
-								<property name="sql.dir" value="sql\create\" />
-								<property name="sql.file" value="create-${database.family}.sql" />
-							</else>
-						</if>
+						<property name="sql.dir" value="sql\create${database.create.suffix}\" />
+						<property name="sql.file" value="create${database.create.suffix}-${database.family}.sql" />
 					</then>
 				</if>
 
@@ -195,16 +210,6 @@
 			</then>
 			<else>
 				<property name="test.ant.script.file.database.collate" value=" " />
-			</else>
-		</if>
-
-		<if>
-			<isset property="test.ant.script.database.minimal" />
-			<then>
-				<property name="test.ant.script.file.database.minimal" value="&lt;property name=&quot;test.database.minimal&quot; value=&quot;true&quot; /&gt;" />
-			</then>
-			<else>
-				<property name="test.ant.script.file.database.minimal" value=" " />
 			</else>
 		</if>
 
@@ -457,7 +462,7 @@
 	</target>
 
 	<target name="build-test-ant-scripts">
-		<property name="build-test-ant-scripts.version" value="2" />
+		<property name="build-test-ant-scripts.version" value="4" />
 
 		<if>
 			<available file="portal-web/test-ant-scripts/version" />
@@ -527,15 +532,48 @@
 		</antcall>
 
 		<antcall target="build-test-ant-script">
+			<param name="test.ant.script.command" value="end-user-administration-p4" />
+			<param name="test.ant.script.database.minimal" value="true" />
+			<param name="test.ant.script.suite" value="EndUserAdministrationP4TestSuite" />
+		</antcall>
+
+		<antcall target="build-test-ant-script">
+			<param name="test.ant.script.command" value="end-user-administration-p5" />
+			<param name="test.ant.script.database.minimal" value="true" />
+			<param name="test.ant.script.properties" value="users.screen.name.allow.numeric=true" />
+			<param name="test.ant.script.suite" value="EndUserAdministrationP5TestSuite" />
+		</antcall>
+
+		<antcall target="build-test-ant-script">
 			<param name="test.ant.script.command" value="end-user-business-productivity-acceptance" />
 			<param name="test.ant.script.database.minimal" value="true" />
 			<param name="test.ant.script.suite" value="EndUserBusinessProductivityAcceptanceTestSuite" />
 		</antcall>
 
 		<antcall target="build-test-ant-script">
+			<param name="test.ant.script.command" value="end-user-calendar-acceptance" />
+			<param name="test.ant.script.database.minimal" value="true" />
+			<param name="test.ant.script.plugin.portlets" value="calendar-portlet" />
+			<param name="test.ant.script.suite" value="EndUserCalendarAcceptanceTestSuite" />
+		</antcall>
+
+		<antcall target="build-test-ant-script">
+			<param name="test.ant.script.command" value="end-user-calendar-p5" />
+			<param name="test.ant.script.database.minimal" value="true" />
+			<param name="test.ant.script.plugin.portlets" value="calendar-portlet" />
+			<param name="test.ant.script.suite" value="EndUserCalendarP5TestSuite" />
+		</antcall>
+
+		<antcall target="build-test-ant-script">
 			<param name="test.ant.script.command" value="end-user-collaboration-acceptance" />
 			<param name="test.ant.script.database.minimal" value="true" />
 			<param name="test.ant.script.suite" value="EndUserCollaborationAcceptanceTestSuite" />
+		</antcall>
+
+		<antcall target="build-test-ant-script">
+			<param name="test.ant.script.command" value="end-user-collaboration-p5" />
+			<param name="test.ant.script.database.minimal" value="true" />
+			<param name="test.ant.script.suite" value="EndUserCollaborationP5TestSuite" />
 		</antcall>
 
 		<antcall target="build-test-ant-script">
@@ -551,15 +589,27 @@
 		</antcall>
 
 		<antcall target="build-test-ant-script">
-			<param name="test.ant.script.command" value="end-user-personalization-acceptance" />
+			<param name="test.ant.script.command" value="end-user-personalization-and-customization-acceptance" />
 			<param name="test.ant.script.database.minimal" value="true" />
-			<param name="test.ant.script.suite" value="EndUserPersonalizationAcceptanceTestSuite" />
+			<param name="test.ant.script.suite" value="EndUserPersonalizationandcustomizationAcceptanceTestSuite" />
+		</antcall>
+
+		<antcall target="build-test-ant-script">
+			<param name="test.ant.script.command" value="end-user-personalization-and-customization-p5" />
+			<param name="test.ant.script.database.minimal" value="true" />
+			<param name="test.ant.script.suite" value="EndUserPersonalizationandcustomizationP5TestSuite" />
 		</antcall>
 
 		<antcall target="build-test-ant-script">
 			<param name="test.ant.script.command" value="end-user-search-acceptance" />
 			<param name="test.ant.script.database.minimal" value="true" />
 			<param name="test.ant.script.suite" value="EndUserSearchAcceptanceTestSuite" />
+		</antcall>
+
+		<antcall target="build-test-ant-script">
+			<param name="test.ant.script.command" value="end-user-search-p5" />
+			<param name="test.ant.script.database.minimal" value="true" />
+			<param name="test.ant.script.suite" value="EndUserSearchP5TestSuite" />
 		</antcall>
 
 		<antcall target="build-test-ant-script">
@@ -573,7 +623,6 @@
 			<param name="test.ant.script.database.minimal" value="true" />
 			<param name="test.ant.script.plugin.themes" value="welcome-theme" />
 			<param name="test.ant.script.plugin.webs" value="resources-importer-web" />
-			<param name="test.ant.script.setup.wizard.enabled" value="true" />
 			<param name="test.ant.script.suite" value="EndUserUserinterfaceAcceptanceTestSuite" />
 		</antcall>
 
@@ -590,6 +639,12 @@
 		</antcall>
 
 		<antcall target="build-test-ant-script">
+			<param name="test.ant.script.command" value="end-user-wcm-p5" />
+			<param name="test.ant.script.database.minimal" value="true" />
+			<param name="test.ant.script.suite" value="EndUserWCMP5TestSuite" />
+		</antcall>
+
+		<antcall target="build-test-ant-script">
 			<param name="test.ant.script.command" value="end-user-web-forms-and-data-lists-acceptance" />
 			<param name="test.ant.script.database.minimal" value="true" />
 			<param name="test.ant.script.plugin.portlets" value="web-form-portlet" />
@@ -597,10 +652,24 @@
 		</antcall>
 
 		<antcall target="build-test-ant-script">
+			<param name="test.ant.script.command" value="end-user-web-forms-and-data-lists-p5" />
+			<param name="test.ant.script.database.minimal" value="true" />
+			<param name="test.ant.script.plugin.portlets" value="web-form-portlet" />
+			<param name="test.ant.script.suite" value="EndUserWebFormsAndDataListsP5TestSuite" />
+		</antcall>
+
+		<antcall target="build-test-ant-script">
 			<param name="test.ant.script.command" value="end-user-workflow-acceptance" />
 			<param name="test.ant.script.database.minimal" value="true" />
 			<param name="test.ant.script.kaleo" value="true" />
 			<param name="test.ant.script.suite" value="EndUserWorkflowAcceptanceTestSuite" />
+		</antcall>
+
+		<antcall target="build-test-ant-script">
+			<param name="test.ant.script.command" value="end-user-workflow-acceptance" />
+			<param name="test.ant.script.database.minimal" value="true" />
+			<param name="test.ant.script.kaleo" value="true" />
+			<param name="test.ant.script.suite" value="EndUserWorkflowP5TestSuite" />
 		</antcall>
 
 		<antcall target="build-test-ant-script">
@@ -627,6 +696,13 @@
 			<param name="test.ant.script.command" value="platform-infrastructure-acceptance" />
 			<param name="test.ant.script.database.minimal" value="true" />
 			<param name="test.ant.script.suite" value="PlatformInfrastructureAcceptanceTestSuite" />
+		</antcall>
+
+		<antcall target="build-test-ant-script">
+			<param name="test.ant.script.command" value="platform-integrations-acceptance" />
+			<param name="test.ant.script.database.minimal" value="true" />
+			<param name="test.ant.script.plugin.portlets" value="akismet-portlet" />
+			<param name="test.ant.script.suite" value="PlatformIntegrationsAcceptanceTestSuite" />
 		</antcall>
 
 		<antcall target="build-test-ant-script">
@@ -677,345 +753,6 @@
 		</antcall>
 
 		<echo file="portal-web/test-ant-scripts/version">${build-test-ant-scripts.version}</echo>
-	</target>
-
-	<target name="build-test-results-xml">
-		<if>
-			<not>
-				<isset property="app-server.type" />
-			</not>
-			<then>
-				<property name="app-server.type" value="${app.server.type}" />
-			</then>
-		</if>
-
-		<if>
-			<not>
-				<isset property="app-server.version" />
-			</not>
-			<then>
-				<property name="app-server.version" value="${app.server.version}" />
-			</then>
-		</if>
-
-		<if>
-			<not>
-				<isset property="browser.type" />
-			</not>
-			<then>
-				<if>
-					<equals arg1="${test.browser}" arg2="googlechrome" />
-					<then>
-						<property name="browser.type" value="google-chrome" />
-					</then>
-					<elseif>
-						<or>
-							<equals arg1="${test.browser}" arg2="iehta" />
-							<equals arg1="${test.browser}" arg2="iexplore" />
-						</or>
-						<then>
-							<property name="browser.type" value="internet-explorer" />
-						</then>
-					</elseif>
-					<else>
-						<property name="browser.type" value="firefox" />
-					</else>
-				</if>
-			</then>
-		</if>
-
-		<if>
-			<not>
-				<isset property="browser.version" />
-			</not>
-			<then>
-				<exec executable="firefox" outputproperty="firefox.version.output">
-					<arg line="-v | more" />
-				</exec>
-
-				<script classpathref="project.classpath" language="beanshell">
-					String firefoxVersionOutput = project.getProperty("firefox.version.output");
-
-					project.setProperty("browser.version", firefoxVersionOutput.trim());
-				</script>
-			</then>
-		</if>
-
-		<if>
-			<not>
-				<isset property="database.type" />
-			</not>
-			<then>
-				<property name="database.type" value="${database}" />
-			</then>
-		</if>
-
-		<if>
-			<not>
-				<isset property="database.version" />
-			</not>
-			<then>
-				<exec executable="mysql" outputproperty="mysql.version.output">
-					<arg line="--version" />
-				</exec>
-
-				<script classpathref="project.classpath" language="beanshell">
-					String mysqlVersionOutput = project.getProperty("mysql.version.output");
-
-					int x = mysqlVersionOutput.indexOf("Distrib ");
-
-					x = mysqlVersionOutput.indexOf(" ", x);
-
-					int y = mysqlVersionOutput.indexOf(", ", x);
-
-					String mysqlVersion = mysqlVersionOutput.substring(x, y).trim();
-
-					project.setProperty("database.version", mysqlVersion);
-				</script>
-			</then>
-		</if>
-
-		<if>
-			<not>
-				<isset property="java.name" />
-			</not>
-			<then>
-				<property name="java.name" value="${java.vm.name}" />
-			</then>
-		</if>
-
-		<if>
-			<not>
-				<isset property="liferay-plugins.edition" />
-			</not>
-			<then>
-				<property name="liferay-plugins.edition" value="CE" />
-			</then>
-		</if>
-
-		<if>
-			<not>
-				<isset property="liferay-plugins.git-id" />
-			</not>
-			<then>
-				<exec dir="${lp.plugins.dir}" executable="git" outputproperty="liferay-plugins.git-log.output">
-					<arg line="log -n 1" />
-				</exec>
-
-				<script classpathref="project.classpath" language="beanshell">
-					String gitLogOutput = project.getProperty("liferay-plugins.git-log.output");
-
-					int x = gitLogOutput.indexOf("commit ");
-
-					x = gitLogOutput.indexOf(" ", x);
-
-					int y = gitLogOutput.indexOf("Author: ", x);
-
-					String gitID = gitLogOutput.substring(x, y).trim();
-
-					project.setProperty("liferay-plugins.git-id", gitID);
-				</script>
-			</then>
-		</if>
-
-		<if>
-			<not>
-				<isset property="liferay-plugins.version" />
-			</not>
-			<then>
-				<var name="lp.version" unset="true" />
-
-				<property file="${lp.plugins.dir}/build.${user.name}.properties" />
-				<property file="${lp.plugins.dir}/build.${env.COMPUTERNAME}.properties" />
-				<property file="${lp.plugins.dir}/build.${env.HOST}.properties" />
-				<property file="${lp.plugins.dir}/build.${env.HOSTNAME}.properties" />
-				<property file="${lp.plugins.dir}/build.properties" />
-
-				<property name="liferay-plugins.version" value="${lp.version}" />
-			</then>
-		</if>
-
-		<if>
-			<not>
-				<isset property="liferay-plugins.version.major" />
-			</not>
-			<then>
-				<script classpathref="project.classpath" language="beanshell">
-					String liferayPluginsVersion = project.getProperty("liferay-plugins.version");
-
-					int x = liferayPluginsVersion.lastIndexOf(".");
-
-					String liferayPluginsVersionMajor = liferayPluginsVersion.substring(0, x).trim();
-
-					project.setProperty("liferay-plugins.version.major", liferayPluginsVersionMajor);
-				</script>
-			</then>
-		</if>
-
-		<if>
-			<not>
-				<isset property="liferay-portal.edition" />
-			</not>
-			<then>
-				<property name="liferay-portal.edition" value="CE" />
-			</then>
-		</if>
-
-		<if>
-			<not>
-				<isset property="liferay-portal.git-id" />
-			</not>
-			<then>
-				<exec dir="${project.dir}" executable="git" outputproperty="liferay-portal.git-log.output">
-					<arg line="log -n 1" />
-				</exec>
-
-				<script classpathref="project.classpath" language="beanshell">
-					String gitLogOutput = project.getProperty("liferay-portal.git-log.output");
-
-					int x = gitLogOutput.indexOf("commit ");
-
-					x = gitLogOutput.indexOf(" ", x);
-
-					int y = gitLogOutput.indexOf("Author: ", x);
-
-					String gitID = gitLogOutput.substring(x, y).trim();
-
-					project.setProperty("liferay-portal.git-id", gitID);
-				</script>
-			</then>
-		</if>
-
-		<if>
-			<not>
-				<isset property="liferay-portal.version" />
-			</not>
-			<then>
-				<var name="lp.version" unset="true" />
-
-				<property file="${project.dir}/release.${user.name}.properties" />
-				<property file="${project.dir}/release.${env.COMPUTERNAME}.properties" />
-				<property file="${project.dir}/release.${env.HOST}.properties" />
-				<property file="${project.dir}/release.${env.HOSTNAME}.properties" />
-				<property file="${project.dir}/release.properties" />
-
-				<property name="liferay-portal.version" value="${lp.version}" />
-			</then>
-		</if>
-
-		<if>
-			<not>
-				<isset property="liferay-portal.version.major" />
-			</not>
-			<then>
-				<script classpathref="project.classpath" language="beanshell">
-					String liferayPortalVersion = project.getProperty("liferay-portal.version");
-
-					int x = liferayPortalVersion.lastIndexOf(".");
-
-					String liferayPortalVersionMajor = liferayPortalVersion.substring(0, x).trim();
-
-					project.setProperty("liferay-portal.version.major", liferayPortalVersionMajor);
-				</script>
-			</then>
-		</if>
-
-		<property name="file.properties">
-			<![CDATA[
-<environment-properties>
-	<property name="app-server.type" value="${app-server.type}" />
-	<property name="app-server.version" value="${app-server.version}" />
-	<property name="browser.type" value="${browser.type}" />
-	<property name="browser.version" value="${browser.version}" />
-	<property name="database.type" value="${database.type}" />
-	<property name="database.version" value="${database.version}" />
-	<property name="java.name" value="${java.name}" />
-	<property name="java.version" value="${java.version}" />
-	<property name="os.name" value="${os.name}" />
-	<property name="os.version" value="${os.version}" />
-</environment-properties>
-<test-properties>
-	<property name="liferay-plugins.edition" value="${liferay-plugins.edition}" />
-	<property name="liferay-plugins.git-id" value="${liferay-plugins.git-id}" />
-	<property name="liferay-plugins.version" value="${liferay-plugins.version}" />
-	<property name="liferay-plugins.version.major" value="${liferay-plugins.version.major}" />
-	<property name="liferay-portal.edition" value="${liferay-portal.edition}" />
-	<property name="liferay-portal.git-id" value="${liferay-portal.git-id}" />
-	<property name="liferay-portal.version" value="${liferay-portal.version}" />
-	<property name="liferay-portal.version.major" value="${liferay-portal.version.major}" />
-</test-properties>
-			]]>
-		</property>
-
-		<for param="file.name">
-			<path>
-				<fileset
-					dir="portal-web/test-results/functional"
-					includes="TEST-*.xml"
-				/>
-			</path>
-			<sequential>
-				<var name="file.name" value="@{file.name}" />
-
-				<script classpathref="project.classpath" language="beanshell">
-					<![CDATA[
-						import com.liferay.portal.kernel.util.StringUtil;
-
-						import java.io.FileInputStream;
-
-						import java.util.Scanner;
-
-						String fileName = project.getProperty("file.name");
-
-						String fileContent = "";
-
-						try {
-							FileInputStream fileInputStream = new FileInputStream(fileName);
-
-							Scanner scanner = new Scanner(fileInputStream);
-
-							boolean addedProperties = false;
-
-							while (scanner.hasNextLine()) {
-								String line = scanner.nextLine();
-
-								if (line.contains("<environment-properties") ||
-									line.contains("</environment-properties") ||
-									line.contains("<properties") ||
-									line.contains("</properties") ||
-									line.contains("<property") ||
-									line.contains("<test-properties") ||
-									line.contains("</test-properties") ||
-									line.contains("<?xml")) {
-
-									continue;
-								}
-
-								if (!addedProperties && line.contains("<testcase")) {
-									String fileProperties = project.getProperty("file.properties");
-
-									fileContent += fileProperties.trim() + "\n";
-
-									addedProperties = true;
-								}
-
-								fileContent += line.trim() + "\n";
-							}
-						}
-						catch (Exception e) {
-						}
-
-						while (fileContent.contains("\n\n")) {
-							fileContent = StringUtil.replace(fileContent, "\n\n", "\n");
-						}
-
-						project.setProperty("file.content", fileContent);
-					]]>
-				</script>
-
-				<echo file="@{file.name}">${file.content}</echo>
-			</sequential>
-		</for>
 	</target>
 
 	<target name="check-config">
@@ -1080,20 +817,22 @@
 		<if>
 			<not>
 				<or>
-					<equals arg1="${database}" arg2="db2" />
+					<equals arg1="${database}" arg2="db2-9.7" />
+					<equals arg1="${database}" arg2="db2-10.1" />
 					<equals arg1="${database}" arg2="hsql" />
 					<equals arg1="${database}" arg2="mysql" />
 					<equals arg1="${database}" arg2="oracle-10" />
 					<equals arg1="${database}" arg2="oracle-11" />
 					<equals arg1="${database}" arg2="postgresql-8.4" />
 					<equals arg1="${database}" arg2="postgresql-9.0" />
+					<equals arg1="${database}" arg2="postgresql-9.2" />
 					<equals arg1="${database}" arg2="sql-server-2005" />
 					<equals arg1="${database}" arg2="sql-server-2008" />
 					<equals arg1="${database}" arg2="sybase" />
 				</or>
 			</not>
 			<then>
-				<fail>Please set "database" to one of the following:${line.separator}db2, hsql, mysql, oracle-10, oracle-11, postgresql-8.4, postgresql-9.0, sql-server-2005, sql-server-2008, sybase</fail>
+				<fail>Please set "database" to one of the following:${line.separator}db2-9.7, db2-10.1, hsql, mysql, oracle-10, oracle-11, postgresql-8.4, postgresql-9.0, postgresql-9.2, sql-server-2005, sql-server-2008, sybase</fail>
 			</then>
 		</if>
 	</target>
@@ -1106,7 +845,8 @@
 				<isset property="skip.delete-liferay-home" />
 			</not>
 			<then>
-				<delete dir="${user.home}/liferay" />
+				<delete dir="${liferay.home}/data" />
+				<delete dir="${liferay.home}/logs" />
 			</then>
 		</if>
 
@@ -1116,99 +856,29 @@
 	</target>
 
 	<target name="clean-up-java-processes">
-		<loadfile property="java.processes.old.content" srcfile="java-processes" />
-
-		<delete file="java-processes" />
-
-		<script classpathref="project.classpath" language="beanshell">
-			String javaProcessesOldContent = project.getProperty("java.processes.old.content");
-
-			if (javaProcessesOldContent.contains("File Not Found")) {
-				javaProcessesOldContent = "";
-			}
-
-			String javaProcessesOldList = javaProcessesOldContent.replaceAll("\r\n", ",");
-
-			if (javaProcessesOldList.endsWith(",")) {
-				javaProcessesOldList = javaProcessesOldList.substring(0, javaProcessesOldList.length() - 1);
-			}
-
-			project.setProperty("java.processes.old.list", javaProcessesOldList);
-		</script>
-
 		<if>
-			<os family="windows" />
+			<os family="unix" />
 			<then>
-				<exec executable="${shell.executable}" output="java-processes">
-					<arg line="/c jps -l" />
-				</exec>
+				<echo file="cleanjava.sh">
+					<![CDATA[
+						#!/bin/bash
+
+						for i in `ps -o pid,args -e | grep /opt/java/jdk | grep -v ant | grep -v grep | grep -v jenkins | cut -c1-5`
+						do
+							echo "Killing $i"
+
+							kill -9 $i
+						done
+					]]>
+				</echo>
+
+				<chmod file="cleanjava.sh" perm="a+x" />
+
+				<exec executable="${basedir}/cleanjava.sh" />
+
+				<delete file="cleanjava.sh" />
 			</then>
-			<else>
-				<exec executable="${shell.executable}" output="java-processes">
-					<arg line="-c jps -l" />
-				</exec>
-			</else>
 		</if>
-
-		<loadfile property="java.processes.new.content" srcfile="java-processes" />
-
-		<delete file="java-processes" />
-
-		<script classpathref="project.classpath" language="beanshell">
-			String javaProcessesNewContent = project.getProperty("java.processes.new.content");
-
-			if (javaProcessesNewContent.contains("File Not Found")) {
-				javaProcessesNewContent = "";
-			}
-
-			String javaProcessesNewList = javaProcessesNewContent.replaceAll("\r\n", ",");
-
-			if (javaProcessesNewList.endsWith(",")) {
-				javaProcessesNewList = javaProcessesNewList.substring(0, javaProcessesNewList.length() - 1);
-			}
-
-			project.setProperty("java.processes.new.list", javaProcessesNewList);
-		</script>
-
-		<for list="${java.processes.new.list}" param="java.processes.new.current">
-			<sequential>
-				<if>
-					<or>
-						<contains string="@{java.processes.new.current}" substring="admin-cli.jar" />
-						<contains string="@{java.processes.new.current}" substring="ASMain" />
-						<contains string="@{java.processes.new.current}" substring="Bootstrap" />
-						<contains string="@{java.processes.new.current}" substring="ClientAdmin" />
-						<contains string="@{java.processes.new.current}" substring="gshell-bootstrap.jar" />
-						<contains string="@{java.processes.new.current}" substring="jboss-modules.jar" />
-						<contains string="@{java.processes.new.current}" substring="selenium-server.jar" />
-						<contains string="@{java.processes.new.current}" substring="server.jar" />
-						<contains string="@{java.processes.new.current}" substring="start.jar" />
-					</or>
-					<then>
-						<antcall target="kill-java-process">
-							<param name="java.process.to.kill" value="@{java.processes.new.current}" />
-						</antcall>
-					</then>
-					<elseif>
-						<contains string="@{java.processes.new.current}" substring="Launcher" />
-						<then>
-							<for list="${java.processes.old.list}" param="java.processes.old.current">
-								<sequential>
-									<if>
-										<contains string="@{java.processes.new.current}" substring="@{java.processes.old.current}" />
-										<then>
-											<antcall target="kill-java-process">
-												<param name="java.process.to.kill" value="@{java.processes.new.current}" />
-											</antcall>
-										</then>
-									</if>
-								</sequential>
-							</for>
-						</then>
-					</elseif>
-				</if>
-			</sequential>
-		</for>
 	</target>
 
 	<target name="clean-up-logs">
@@ -1265,7 +935,10 @@
 
 	<target name="copy-optional-jars">
 		<if>
-			<equals arg1="${database}" arg2="db2" />
+			<or>
+				<equals arg1="${database}" arg2="db2-9.7" />
+				<equals arg1="${database}" arg2="db2-10.1" />
+			</or>
 			<then>
 				<delete includeemptydirs="true" failonerror="false">
 					<fileset
@@ -1275,9 +948,9 @@
 				</delete>
 
 				<copy todir="${todir}">
-						<fileset
-							dir="${jdbc.drivers.optional.dir}/db2/8.1.18"
-							includes="${jdbc.db2.driver}"
+					<fileset
+						dir="${jdbc.drivers.optional.dir}/db2/8.1.18"
+						includes="${jdbc.db2.driver}"
 					/>
 				</copy>
 			</then>
@@ -1291,7 +964,7 @@
 				<then>
 					<copy todir="${todir}">
 						<fileset
-							dir="${jdbc.drivers.optional.dir}/mysql/5.0.7"
+							dir="lib/development"
 							includes="${jdbc.mysql.driver}"
 						/>
 					</copy>
@@ -1372,8 +1045,10 @@
 		<if>
 			<isset property="test.evaluate.logs" />
 			<then>
-				<ant dir="portal-web" target="test-class" inheritAll="false">
-					<property name="class" value="EvaluateLogTestSuite" />
+				<var name="test.class" unset="true" />
+
+				<ant dir="portal-web" target="test-class">
+					<property name="test.class" value="EvaluateLogTestSuite" />
 				</ant>
 			</then>
 		</if>
@@ -1398,6 +1073,32 @@
 	</target>
 
 	<target name="generate-test-properties" depends="check-config">
+		<if>
+			<contains string="${test.class}" substring="#" />
+			<then>
+				<script classpathref="project.classpath" language="beanshell">
+					String testClass = project.getProperty("test.class");
+
+					int x = testClass.indexOf("#");
+
+					String testMethodName = testClass.substring(x + 1);
+
+					project.setProperty("test.method.name", testMethodName);
+
+					String testSimpleClassName =  testClass.substring(0, x);
+
+					project.setProperty("test.simple.class.name", testSimpleClassName);
+				</script>
+			</then>
+			<elseif>
+				<isset property="test.class" />
+				<then>
+					<property name="test.simple.class.name" value="${test.class}" />
+					<property name="test.method.name" value="[A-Za-z]*" />
+				</then>
+			</elseif>
+		</if>
+
 		<xmlproperty
 			file="portal-web/test-config/database.xml"
 			keeproot="true"
@@ -1406,6 +1107,7 @@
 		<echoproperties destfile="${basedir}/test.run.properties">
 			<propertyset>
 				<propertyref prefix="database.${database}" />
+				<propertyref prefix="${test.simple.class.name}." />
 			</propertyset>
 		</echoproperties>
 
@@ -1415,6 +1117,25 @@
 			match="database\.${database}"
 			replace="database"
 		/>
+
+		<if>
+			<isset property="test.class" />
+			<then>
+				<replaceregexp
+					file="${basedir}/test.run.properties"
+					flags="g"
+					match="${test.simple.class.name}\.(${test.method.name}|all)\."
+					replace=""
+				/>
+
+				<replaceregexp
+					file="${basedir}/test.run.properties"
+					flags="g"
+					match="${test.simple.class.name}.*"
+					replace=""
+				/>
+			</then>
+		</if>
 
 		<property file="${basedir}/test.run.properties" />
 
@@ -1434,6 +1155,12 @@
 
 			String testClass = project.getProperty("test.class");
 
+			if (testClass.contains("#")) {
+				int x = testClass.indexOf("#");
+
+				testClass =  testClass.substring(0, x);
+			}
+
 			if (testClass.endsWith("TestCase")) {
 				testCase = testClass.replaceAll("TestCase", "");
 			}
@@ -1441,18 +1168,18 @@
 				testSuite = testClass.replaceAll("TestSuite", "");
 			}
 
-			project.setProperty("test-case", testCase);
-			project.setProperty("test-suite", testSuite);
+			project.setProperty("test.case", testCase);
+			project.setProperty("test.suite", testSuite);
 		</script>
 
 		<if>
 			<available file="portal-web/test/functional" type="dir" />
 			<then>
-				<resourcecount property="test-case.count">
-					<fileset dir="portal-web/test/functional" includes="**/${test-case}.testcase" />
+				<resourcecount property="test.case.count">
+					<fileset dir="portal-web/test/functional" includes="**/${test.case}.testcase" />
 				</resourcecount>
-				<resourcecount property="test-suite.count">
-					<fileset dir="portal-web/test/functional" includes="**/${test-suite}.testsuite" />
+				<resourcecount property="test.suite.count">
+					<fileset dir="portal-web/test/functional" includes="**/${test.suite}.testsuite" />
 				</resourcecount>
 			</then>
 		</if>
@@ -1462,15 +1189,15 @@
 		<if>
 			<or>
 				<and>
-					<isset property="test-case.count" />
+					<isset property="test.case.count" />
 					<not>
-						<equals arg1="${test-case.count}" arg2="0" />
+						<equals arg1="${test.case.count}" arg2="0" />
 					</not>
 				</and>
 				<and>
-					<isset property="test-suite.count" />
+					<isset property="test.suite.count" />
 					<not>
-						<equals arg1="${test-suite.count}" arg2="0" />
+						<equals arg1="${test.suite.count}" arg2="0" />
 					</not>
 				</and>
 			</or>
@@ -1506,24 +1233,6 @@
 		<antcall target="execute-remote-command">
 			<param name="vm.host" value="${vm.host}" />
 		</antcall>
-	</target>
-
-	<target name="kill-java-process">
-		<echo>Killing Java process "${java.process.to.kill}"</echo>
-
-		<script classpathref="project.classpath" language="beanshell">
-			String javaProcessToKill = project.getProperty("java.process.to.kill");
-
-			int x = javaProcessToKill.indexOf(" ");
-
-			String javaProcessPid = javaProcessToKill.substring(0, x).trim();
-
-			project.setProperty("java.process.pid", javaProcessPid);
-		</script>
-
-		<exec executable="taskkill.exe">
-			<arg line="/f /fi &quot;pid eq ${java.process.pid}&quot;" />
-		</exec>
 	</target>
 
 	<target name="merge-test-results">
@@ -1594,7 +1303,7 @@
 	</target>
 
 	<target name="prepare-portal-ext-properties" depends="generate-test-properties">
-		<echo file="portal-impl/src/portal-ext.properties">liferay.home=$${user.home}/liferay
+		<echo file="portal-impl/src/portal-ext.properties">liferay.home=${liferay.home}
 
 plugin.notifications.enabled=false
 
@@ -1876,7 +1585,7 @@ message.boards.subscribe.by.default=false</echo>
 			<then>
 				<replace
 					file="portal-impl/src/portal-ext.properties"
-					token="liferay.home=$${user.home}/liferay"
+					token="liferay.home=${liferay.home}"
 					value="liferay.home=C:/WINDOWS/system32/config/systemprofile/liferay"
 				/>
 
@@ -1908,6 +1617,20 @@ auto.deploy.dest.dir=C:/WINDOWS/system32/config/systemprofile/liferay/websphere-
 				<replace file="portal-impl/src/portal-ext.properties" token="setup.wizard.enabled=false" value="" />
 			</then>
 		</if>
+
+		<if>
+			<equals arg1="${tck.url}" arg2="true" />
+			<then>
+				<echo file="portal-impl/src/portal-ext.properties" append="true">
+
+tck.url=true</echo>
+			</then>
+		</if>
+
+		<copy
+			file="portal-impl/src/portal-ext.properties"
+			tofile="${app.server.classes.portal.dir}/portal-ext.properties"
+		/>
 	</target>
 
 	<target name="prepare-portal-properties">
@@ -2015,6 +1738,50 @@ svn --username ${svn.username} --password ${svn.password} update -r ${svn.info.r
 		</if>
 
 		<if>
+			<isset property="email.address.1" />
+			<then>
+				<replace
+					file="portal-web/test/test-portal-web.properties"
+					token="#email.address.1="
+					value="email.address.1=${email.address.1}"
+				/>
+			</then>
+		</if>
+
+		<if>
+			<isset property="email.address.2" />
+			<then>
+				<replace
+					file="portal-web/test/test-portal-web.properties"
+					token="#email.address.2="
+					value="email.address.2=${email.address.2}"
+				/>
+			</then>
+		</if>
+
+		<if>
+			<isset property="email.password.1" />
+			<then>
+				<replace
+					file="portal-web/test/test-portal-web.properties"
+					token="#email.password.1="
+					value="email.password.1=${email.password.1}"
+				/>
+			</then>
+		</if>
+
+		<if>
+			<isset property="email.password.2" />
+			<then>
+				<replace
+					file="portal-web/test/test-portal-web.properties"
+					token="#email.password.2="
+					value="email.password.2=${email.password.2}"
+				/>
+			</then>
+		</if>
+
+		<if>
 			<not>
 				<isset property="skip.delete-selenium-output" />
 			</not>
@@ -2022,6 +1789,17 @@ svn --username ${svn.username} --password ${svn.password} update -r ${svn.info.r
 				<delete dir="${selenium.output.dir}" />
 
 				<mkdir dir="${selenium.output.dir}" />
+			</then>
+		</if>
+
+		<if>
+			<equals arg1="${test.assert.javascript.errors}" arg2="false" />
+			<then>
+				<replace
+					file="portal-web/test/test-portal-web.properties"
+					token="test.assert.javascript.errors=true"
+					value="test.assert.javascript.errors=false"
+				/>
 			</then>
 		</if>
 
@@ -2116,17 +1894,6 @@ svn --username ${svn.username} --password ${svn.password} update -r ${svn.info.r
 		</if>
 
 		<if>
-			<isset property="test.database.minimal" />
-			<then>
-				<replace
-					file="portal-web/test/test-portal-web.properties"
-					token="test.database.minimal=false"
-					value="test.database.minimal=true"
-				/>
-			</then>
-		</if>
-
-		<if>
 			<equals arg1="${test.save.screenshot}" arg2="true" />
 			<then>
 				<replace
@@ -2136,6 +1903,290 @@ svn --username ${svn.username} --password ${svn.password} update -r ${svn.info.r
 				/>
 			</then>
 		</if>
+
+		<if>
+			<equals arg1="${test.skip.tear.down}" arg2="true" />
+			<then>
+				<replace
+					file="portal-web/test/test-portal-web.properties"
+					token="test.skip.tear.down=false"
+					value="test.skip.tear.down=true"
+				/>
+			</then>
+		</if>
+	</target>
+
+	<target name="prepare-test-build">
+		<antcall target="record-git-commit-portal" inheritAll="false" />
+
+		<antcall target="start" inheritAll="false" />
+
+		<if>
+			<matches pattern="http" string="${test.build.bundle.glassfish.zip.url}" />
+			<then>
+				<mkdir dir="${app.server.parent.dir}" />
+
+				<tstamp>
+					<format property="tstamp.value" pattern="yyyyMMddkkmmssSSS" />
+				</tstamp>
+
+				<get
+					dest="${tstamp.value}.zip"
+					src="${test.build.bundle.glassfish.zip.url}"
+				/>
+
+				<unzip
+					dest="${app.server.parent.dir}"
+					src="${tstamp.value}.zip"
+				>
+					<patternset
+						includes="liferay-portal-*/glassfish-*/**"
+					/>
+					<mapper
+						from="[^/]+/(.*)"
+						to="\1"
+						type="regexp"
+					/>
+				</unzip>
+
+				<chmod perm="a+x">
+					<fileset dir="${app.server.glassfish.bin.dir}">
+						<include name="*.sh" />
+					</fileset>
+				</chmod>
+
+				<delete file="${tstamp.value}.zip" />
+			</then>
+		</if>
+
+		<if>
+			<matches pattern="http" string="${test.build.bundle.jboss.zip.url}" />
+			<then>
+				<mkdir dir="${app.server.parent.dir}" />
+
+				<tstamp>
+					<format property="tstamp.value" pattern="yyyyMMddkkmmssSSS" />
+				</tstamp>
+
+				<get
+					dest="${tstamp.value}.zip"
+					src="${test.build.bundle.jboss.zip.url}"
+				/>
+
+				<unzip
+					dest="${app.server.parent.dir}"
+					src="${tstamp.value}.zip"
+				>
+					<patternset
+						includes="liferay-portal-*/jboss-*/**"
+					/>
+					<mapper
+						from="[^/]+/(.*)"
+						to="\1"
+						type="regexp"
+					/>
+				</unzip>
+
+				<chmod perm="a+x">
+					<fileset dir="${app.server.jboss.bin.dir}">
+						<include name="*.sh" />
+					</fileset>
+				</chmod>
+
+				<delete file="${tstamp.value}.zip" />
+			</then>
+		</if>
+
+		<if>
+			<matches pattern="http" string="${test.build.bundle.jetty.zip.url}" />
+			<then>
+				<mkdir dir="${app.server.parent.dir}" />
+
+				<tstamp>
+					<format property="tstamp.value" pattern="yyyyMMddkkmmssSSS" />
+				</tstamp>
+
+				<get
+					dest="${tstamp.value}.zip"
+					src="${test.build.bundle.jetty.zip.url}"
+				/>
+
+				<unzip
+					dest="${app.server.parent.dir}"
+					src="${tstamp.value}.zip"
+				>
+					<patternset
+						includes="liferay-portal-*/jetty-*/**"
+					/>
+					<mapper
+						from="[^/]+/(.*)"
+						to="\1"
+						type="regexp"
+					/>
+				</unzip>
+
+				<chmod perm="a+x">
+					<fileset dir="${app.server.jetty.bin.dir}">
+						<include name="*.sh" />
+					</fileset>
+				</chmod>
+
+				<delete file="${tstamp.value}.zip" />
+			</then>
+		</if>
+
+		<if>
+			<matches pattern="http" string="${test.build.bundle.resin.zip.url}" />
+			<then>
+				<mkdir dir="${app.server.parent.dir}" />
+
+				<tstamp>
+					<format property="tstamp.value" pattern="yyyyMMddkkmmssSSS" />
+				</tstamp>
+
+				<get
+					dest="${tstamp.value}.zip"
+					src="${test.build.bundle.resin.zip.url}"
+				/>
+
+				<unzip
+					dest="${app.server.parent.dir}"
+					src="${tstamp.value}.zip"
+				>
+					<patternset
+						includes="liferay-portal-*/resin-*/**"
+					/>
+					<mapper
+						from="[^/]+/(.*)"
+						to="\1"
+						type="regexp"
+					/>
+				</unzip>
+
+				<chmod perm="a+x">
+					<fileset dir="${app.server.resin.bin.dir}">
+						<include name="*.sh" />
+					</fileset>
+				</chmod>
+
+				<delete file="${tstamp.value}.zip" />
+			</then>
+		</if>
+
+		<if>
+			<matches pattern="http" string="${test.build.bundle.tomcat.zip.url}" />
+			<then>
+				<mkdir dir="${app.server.parent.dir}" />
+
+				<tstamp>
+					<format property="tstamp.value" pattern="yyyyMMddkkmmssSSS" />
+				</tstamp>
+
+				<get
+					dest="${tstamp.value}.zip"
+					src="${test.build.bundle.tomcat.zip.url}"
+				/>
+
+				<unzip
+					dest="${app.server.parent.dir}"
+					src="${tstamp.value}.zip"
+				>
+					<patternset
+						includes="liferay-portal-*/tomcat-*/**"
+					/>
+					<mapper
+						from="[^/]+/(.*)"
+						to="\1"
+						type="regexp"
+					/>
+				</unzip>
+
+				<chmod perm="a+x">
+					<fileset dir="${app.server.tomcat.bin.dir}">
+						<include name="*.sh" />
+					</fileset>
+				</chmod>
+
+				<delete file="${tstamp.value}.zip" />
+			</then>
+			<else>
+				<ant antfile="build-dist.xml" target="unzip-tomcat" inheritAll="false" />
+
+				<antcall target="deploy" inheritAll="false" />
+			</else>
+		</if>
+
+		<if>
+			<equals arg1="${test.build.bundle.weblogic}" arg2="true" />
+			<then>
+				<ant antfile="build-dist.xml" target="unzip-weblogic" inheritAll="false" />
+
+				<get
+					dest="liferay-portal.war"
+					src="${test.build.portal.war.url}"
+				/>
+
+				<unzip
+					dest="${app.server.weblogic.portal.dir}"
+					src="liferay-portal.war"
+				/>
+
+				<delete file="liferay-portal.war" />
+
+				<get
+					dest="liferay-portal-dependencies.zip"
+					src="${test.build.portal.dependencies.zip.url}"
+				/>
+
+				<unzip
+					dest="${app.server.weblogic.lib.global.dir}"
+					src="liferay-portal-dependencies.zip"
+				>
+					<mapper
+						from="[^/]+/(.*)"
+						to="\1"
+						type="regexp"
+					/>
+				</unzip>
+
+				<delete file="liferay-portal-dependencies.zip" />
+			</then>
+		</if>
+
+		<if>
+			<matches pattern="http" string="${test.build.license.xml.zip.url}" />
+			<then>
+				<mkdir dir="${liferay.home}/deploy" />
+
+				<get
+					dest="${liferay.home}/deploy/license.xml"
+					src="${test.build.license.xml.zip.url}"
+				/>
+			</then>
+		</if>
+
+		<if>
+			<matches pattern="http" string="${test.build.plugins.war.zip.url}" />
+			<then>
+				<get
+					dest="plugins.war.zip"
+					src="${test.build.plugins.war.zip.url}"
+				/>
+
+				<unzip
+					dest="."
+					src="plugins.war.zip"
+				/>
+
+				<delete file="plugins.war.zip" />
+			</then>
+		</if>
+
+		<ant dir="portal-impl" target="build-selenium-new" inheritAll="false" />
+
+		<antcall target="compile-test" inheritAll="false" />
+
+		<antcall target="record-test-package-names" inheritAll="false" />
 	</target>
 
 	<target name="prepare-test-properties" depends="generate-test-properties">
@@ -2234,8 +2285,14 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 		</antcall>
 	</target>
 
-	<target name="prepare-versioned-db2">
-		<echo file="test.${user.name}.properties">database=db2</echo>
+	<target name="prepare-versioned-db2-9.7">
+		<echo file="test.${user.name}.properties">database=db2-9.7</echo>
+
+		<antcall target="prepare-versioned-common" inheritAll="false" />
+	</target>
+
+	<target name="prepare-versioned-db2-10.1">
+		<echo file="test.${user.name}.properties">database=db2-10.1</echo>
 
 		<antcall target="prepare-versioned-common" inheritAll="false" />
 	</target>
@@ -2266,6 +2323,12 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 
 	<target name="prepare-versioned-postgresql-9.0">
 		<echo file="test.${user.name}.properties">database=postgresql-9.0</echo>
+
+		<antcall target="prepare-versioned-common" inheritAll="false" />
+	</target>
+
+	<target name="prepare-versioned-postgresql-9.2">
+		<echo file="test.${user.name}.properties">database=postgresql-9.2</echo>
 
 		<antcall target="prepare-versioned-common" inheritAll="false" />
 	</target>
@@ -2412,6 +2475,27 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 
 	<target name="rebuild-database" depends="generate-test-properties,build-sql-file">
 		<if>
+			<equals arg1="${database}" arg2="sybase" />
+			<then>
+				<parallel>
+					<daemons>
+						<exec executable="${plink.executable}">
+							<arg line="-pw ${vm.password} ${vm.username}@${database.host} cmd.exe /c C:/Sybase/ASE-15_0/install/RUN_LIFERAYEAD7385.bat" />
+						</exec>
+					</daemons>
+
+					<sequential>
+						<waitfor>
+							<socket server="${database.host}" port="5000" />
+						</waitfor>
+
+						<sleep seconds="5" />
+					</sequential>
+				</parallel>
+			</then>
+		</if>
+
+		<if>
 			<not>
 				<isset property="skip.rebuild-database" />
 			</not>
@@ -2421,28 +2505,49 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 						<isset property="skip.delete-liferay-home" />
 					</not>
 					<then>
-						<delete dir="${user.home}/liferay" />
+						<delete dir="${liferay.home}/data" />
+						<delete dir="${liferay.home}/logs" />
 					</then>
 				</if>
 
 				<if>
 					<equals arg1="${database}" arg2="hsql" />
 					<then>
-						<delete dir="${user.home}/liferay/data" includeemptydirs="true" />
+						<delete dir="${liferay.home}/data" includeemptydirs="true" />
 
-						<if>
-							<not>
-								<isset property="test.database.minimal" />
-							</not>
-							<then>
-								<copy file="sql/${database.name}.properties" tofile="${user.home}/liferay/data/hsql/${database.name}.properties" />
-								<copy file="sql/${database.name}.script" tofile="${user.home}/liferay/data/hsql/${database.name}.script" />
-							</then>
-						</if>
+						<copy file="sql/${database.name}.properties" tofile="${liferay.home}/data/hsql/${database.name}.properties" />
+						<copy file="sql/${database.name}.script" tofile="${liferay.home}/data/hsql/${database.name}.script" />
 					</then>
 					<elseif>
 						<equals arg1="${database.family}" arg2="mysql" />
 						<then>
+							<var name="mysql.arg.line" unset="true" />
+
+							<if>
+								<and>
+									<equals arg1="${database.password}" arg2="" />
+									<equals arg1="${database.username}" arg2="" />
+								</and>
+								<then>
+									<var name="mysql.arg.line" value="" />
+								</then>
+								<elseif>
+									<equals arg1="${database.password}" arg2="" />
+									<then>
+										<var name="mysql.arg.line" value="-u ${database.username}" />
+									</then>
+								</elseif>
+								<elseif>
+									<equals arg1="${database.username}" arg2="" />
+									<then>
+										<var name="mysql.arg.line" value="-p${database.password}" />
+									</then>
+								</elseif>
+								<else>
+									<var name="mysql.arg.line" value="-p${database.password} -u ${database.username}" />
+								</else>
+							</if>
+
 							<exec executable="${mysql.executable}" input="create.sql">
 								<arg line="${mysql.arg.line}" />
 							</exec>
@@ -2472,20 +2577,51 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 		<delete file="create.sql" />
 	</target>
 
-	<target name="record-java-processes">
-		<if>
-			<os family="windows" />
-			<then>
-				<exec executable="${shell.executable}" output="java-processes">
-					<arg line="/c jps -q" />
-				</exec>
-			</then>
-			<else>
-				<exec executable="${shell.executable}" output="java-processes">
-					<arg line="-c jps -q" />
-				</exec>
-			</else>
-		</if>
+	<target name="record-test-package-names">
+		<script classpathref="project.classpath" language="beanshell">
+			import com.liferay.portal.kernel.util.OSDetector;
+			import com.liferay.portal.kernel.util.StringUtil;
+
+			import org.apache.tools.ant.DirectoryScanner;
+
+			DirectoryScanner directoryScanner = new DirectoryScanner();
+
+			directoryScanner.setBasedir(project.getBaseDir());
+			directoryScanner.setIncludes(new String[] {"**/test/integration/**/*Test.java", "**/test/unit/**/*Test.java"});
+
+			directoryScanner.scan();
+
+			String[] fileNames = directoryScanner.getIncludedFiles();
+
+			Arrays.sort(fileNames);
+
+			Set packageNames = new TreeSet();
+
+			for (String fileName : fileNames) {
+				int x = fileName.indexOf("com/");
+				int y = fileName.lastIndexOf("/");
+
+				if (OSDetector.isWindows()) {
+					x = fileName.indexOf("com\\");
+					y = fileName.lastIndexOf("\\");
+				}
+
+				if (fileName.endsWith("ServiceHttpTest.java") || fileName.endsWith("ServiceJsonTest.java") || fileName.endsWith("ServiceSoapTest.java")) {
+					continue;
+				}
+
+				String packageName = fileName.substring(x, y);
+
+				packageName = StringUtil.replace(packageName, "/", ".");
+				packageName = StringUtil.replace(packageName, "\\", ".");
+
+				packageNames.add(packageName);
+			}
+
+			project.setProperty("test.package.names", StringUtil.merge(packageNames, " "));
+		</script>
+
+		<echo file="test.package.names.properties">TEST_PACKAGE_NAMES=${test.package.names}</echo>
 	</target>
 
 	<target name="replace-remote-file">
@@ -2544,6 +2680,20 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 		</exec>
 	</target>
 
+	<target name="run-selenium-smoke-test">
+		<antcall target="compile" />
+
+		<antcall target="start-selenium" />
+
+		<ant dir="portal-impl" target="compile-test" inheritAll="false" />
+
+		<ant dir="portal-web" target="test-class" inheritAll="false">
+			<property name="test.class" value="SeleniumSmokeTestSuite" />
+		</ant>
+
+		<antcall target="stop-selenium" />
+	</target>
+
 	<target name="run-selenium-test">
 		<if>
 			<and>
@@ -2554,11 +2704,11 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 			</and>
 			<then>
 				<ant dir="portal-impl" target="test-class" inheritAll="false">
-					<property name="class" value="ServiceHttpTestSuite" />
+					<property name="test.class" value="ServiceHttpTestSuite" />
 				</ant>
 
 				<ant dir="portal-impl" target="test-class" inheritAll="false">
-					<property name="class" value="ServiceSoapTestSuite" />
+					<property name="test.class" value="ServiceSoapTestSuite" />
 				</ant>
 			</then>
 		</if>
@@ -2581,18 +2731,87 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 			</else>
 		</if>
 
-		<antcall target="generate-tests" inheritAll="false">
-			<param name="test.class" value="${test.class}" />
-		</antcall>
-
 		<ant dir="portal-impl" target="compile-test" inheritAll="false" />
 
-		<ant dir="portal-web" target="test-class" inheritAll="false">
-			<property name="class" value="${test.class}" />
-		</ant>
+		<if>
+			<contains string="${test.class}" substring="#" />
+			<then>
+				<replace
+					file="portal-web/test/test-portal-web.properties"
+					token="testing.class.method=false"
+					value="testing.class.method=true"
+				/>
+
+				<script classpathref="project.classpath" language="beanshell">
+					String testClass = project.getProperty("test.class");
+
+					int x = testClass.indexOf("#");
+
+					String testMethodName = testClass.substring(x + 1);
+
+					project.setProperty("test.method.name", testMethodName);
+
+					String testSimpleClassName =  testClass.substring(0, x);
+
+					project.setProperty("test.simple.class.name", testSimpleClassName);
+				</script>
+
+				<for param="test.java.file">
+					<path>
+						<fileset dir="portal-web/test/functional-generated">
+							<include name="**/${test.simple.class.name}.java" />
+						</fileset>
+					</path>
+					<sequential>
+						<var name="test.java.file" value="@{test.java.file}" />
+
+						<script classpathref="project.classpath" language="beanshell">
+							import com.liferay.portal.kernel.util.OSDetector;
+
+							String testJavaFile = project.getProperty("test.java.file");
+
+							int x;
+
+							if (OSDetector.isWindows()) {
+								x = testJavaFile.indexOf("\\com\\") + 1;
+							}
+							else {
+								x = testJavaFile.indexOf("/com/") + 1;
+							}
+
+							int y = testJavaFile.lastIndexOf(".");
+
+							testJavaFile = testJavaFile.substring(x, y);
+
+							if (OSDetector.isWindows()) {
+								project.setProperty("test.class.name", testJavaFile.replaceAll("\\\\", "."));
+							}
+							else {
+								project.setProperty("test.class.name", testJavaFile.replaceAll("/", "."));
+							}
+						</script>
+					</sequential>
+				</for>
+
+				<var name="test.class" unset="true" />
+				<var name="test.methods" unset="true" />
+				<var name="test.type" unset="true" />
+
+				<ant dir="portal-web" target="test-method">
+					<property name="test.class" value="${test.class.name}" />
+					<property name="test.methods" value="${test.method.name}" />
+					<property name="test.type" value="functional" />
+				</ant>
+			</then>
+			<else>
+				<ant dir="portal-web" target="test-class" inheritAll="false" />
+			</else>
+		</if>
 	</target>
 
-	<target name="run-simple-server">
+	<target name="run-simple-server" depends="generate-test-properties">
+		<antcall target="clean-up-java-processes" inheritAll="false" />
+
 		<antcall target="rebuild-database" inheritAll="false" />
 
 		<antcall target="copy-optional-jars" inheritAll="false">
@@ -2645,6 +2864,13 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 			</then>
 		</if>
 
+		<ant antfile="build-test-plugins.xml" target="deploy-simple-server-plugins">
+			<property name="plugin.types" value="portlets" />
+			<property name="plugins.includes" value="marketplace-portlet" />
+		</ant>
+
+		<property name="plugins.deployed" value="true" />
+
 		<if>
 			<isset property="hook.plugins.includes" />
 			<then>
@@ -2653,8 +2879,6 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 					<property name="plugins.deployed" value="${plugins.deployed}" />
 					<property name="plugins.includes" value="${hook.plugins.includes}" />
 				</ant>
-
-				<property name="plugins.deployed" value="true" />
 			</then>
 		</if>
 
@@ -2666,8 +2890,6 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 					<property name="plugins.deployed" value="${plugins.deployed}" />
 					<property name="plugins.includes" value="${layouttpl.plugins.includes}" />
 				</ant>
-
-				<property name="plugins.deployed" value="true" />
 			</then>
 		</if>
 
@@ -2688,8 +2910,6 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 					<property name="plugins.deployed" value="${plugins.deployed}" />
 					<property name="plugins.includes" value="${portlet.plugins.includes}" />
 				</ant>
-
-				<property name="plugins.deployed" value="true" />
 			</then>
 		</if>
 
@@ -2701,8 +2921,6 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 					<property name="plugins.deployed" value="${plugins.deployed}" />
 					<property name="plugins.includes" value="chat-portlet,flash-portlet,portal-compat-hook,sample-service-builder-portlet,test-pacl-portlet" />
 				</ant>
-
-				<property name="plugins.deployed" value="true" />
 			</then>
 		</if>
 
@@ -2714,8 +2932,6 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 					<property name="plugins.deployed" value="${plugins.deployed}" />
 					<property name="plugins.includes" value="${theme.plugins.includes}" />
 				</ant>
-
-				<property name="plugins.deployed" value="true" />
 			</then>
 		</if>
 
@@ -2727,8 +2943,6 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 					<property name="plugins.deployed" value="${plugins.deployed}" />
 					<property name="plugins.includes" value="${web.plugins.includes}" />
 				</ant>
-
-				<property name="plugins.deployed" value="true" />
 			</then>
 		</if>
 
@@ -2771,21 +2985,78 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 				<arg line="${simple.server.start.executable.arg.line}" />
 			</exec>
 
+			<if>
+				<equals arg1="${simple.server.type}" arg2="jboss" />
+				<then>
+					<echo file="${simple.server.deploy.dir}/ROOT.war.dodeploy"></echo>
+				</then>
+			</if>
+
 			<sequential>
 				<waitfor>
 					<http url="http://localhost:8080/web/guest" />
 				</waitfor>
 
-				<if>
-					<or>
-						<contains string="${simple.server.dir}" substring="glassfish" />
-						<contains string="${simple.server.dir}" substring="jonas" />
-						<isset property="plugins.deployed" />
-					</or>
-					<then>
-						<sleep seconds="60" />
-					</then>
-				</if>
+				<waitfor>
+					<available file="${liferay.home}/logs" />
+				</waitfor>
+
+				<for param="log.file">
+					<path>
+						<fileset dir="${liferay.home}/logs">
+							<include name="*.log" />
+						</fileset>
+					</path>
+					<sequential>
+						<var name="log.file" value="@{log.file}" />
+					</sequential>
+				</for>
+
+				<script classpathref="project.classpath" language="beanshell">
+					<![CDATA[
+						import com.liferay.portal.kernel.util.StringUtil;
+
+						import org.apache.commons.io.FileUtils;
+
+						Set requiredPluginNamesSet = new HashSet();
+
+						requiredPluginNamesSet.add("marketplace-portlet");
+
+						String[] pluginTypes = {"hook", "layouttpl", "portlet", "theme", "web"};
+
+						for (String pluginType : pluginTypes) {
+							String[] pluginNames = StringUtil.split(project.getProperty(pluginType + ".plugins.includes"), ',');
+
+							for (String pluginName : pluginNames) {
+								requiredPluginNamesSet.add(pluginName);
+							}
+						}
+
+						System.out.println("Ensuring the following plugins have been deployed:");
+						System.out.println(StringUtil.merge(requiredPluginNamesSet));
+
+						int i = 0;
+
+						for (String pluginName : requiredPluginNamesSet) {
+							String content = "";
+
+							while (i < 120 && !content.contains(pluginName + " is available for use")) {
+								try {
+									Thread.sleep(1000);
+
+									File file = new File(StringUtil.replace(project.getProperty("log.file"), "\\", "/"));
+
+									content = FileUtils.readFileToString(file);
+
+									i++;
+								}
+								catch (Exception e) {
+									e.printStackTrace();
+								}
+							}
+						}
+					]]>
+				</script>
 
 				<if>
 					<contains string="${hook.plugins.includes}" substring="so-hook" />
@@ -2802,6 +3073,8 @@ custom.sql.function.isnotnull=CONVERT(VARCHAR,?) IS NOT NULL</echo>
 				</if>
 
 				<antcall target="run-selenium-test" />
+
+				<sleep seconds="15" />
 
 				<exec dir="${simple.server.bin.dir}" executable="${simple.server.stop.executable}" resolveexecutable="true">
 					<arg line="${simple.server.stop.executable.arg.line}" />
@@ -2975,15 +3248,13 @@ Please set "ie.driver.zip" in test.properties to point to "IEDriverServer_x64_2.
 			<param name="database" value="mysql" />
 		</antcall>
 
-		<antcall target="rebuild-database" inheritAll="false">
-			<param name="test.database.minimal" value="true" />
-		</antcall>
+		<antcall target="rebuild-database" />
 
 		<antcall target="revert-test-properties" />
 
-		<antcall target="test-integration" inheritAll="false" />
+		<antcall target="test-integration" />
 
-		<antcall target="test-unit" inheritAll="false" />
+		<antcall target="test-unit" />
 
 		<ant dir="sql" target="test-sample-sql" inheritAll="false" />
 
@@ -2998,6 +3269,12 @@ Please set "ie.driver.zip" in test.properties to point to "IEDriverServer_x64_2.
 		<ant dir="portal-service" target="test-integration" inheritAll="false" />
 		<ant dir="portal-impl" target="test-integration" inheritAll="false" />
 		<ant dir="util-java" target="test-integration" inheritAll="false" />
+	</target>
+
+	<target name="test-package">
+		<ant dir="portal-service" target="test-package" inheritAll="false" />
+		<ant dir="portal-impl" target="test-package" inheritAll="false" />
+		<ant dir="util-java" target="test-package" inheritAll="false" />
 	</target>
 
 	<target name="test-unit">

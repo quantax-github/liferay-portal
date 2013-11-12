@@ -114,11 +114,15 @@ public class InitUtil {
 
 		SanitizerLogWrapper.init();
 
+		// Java properties
+
+		JavaDetector.isJDK5();
+
 		// Security manager
 
 		SecurityManagerUtil.init();
 
-		if (!SecurityManagerUtil.isPACLDisabled()) {
+		if (SecurityManagerUtil.ENABLED) {
 			com.liferay.portal.kernel.util.PropsUtil.setProps(
 				DoPrivilegedUtil.wrap(
 					com.liferay.portal.kernel.util.PropsUtil.getProps()));
@@ -145,10 +149,6 @@ public class InitUtil {
 		// DB factory
 
 		DBFactoryUtil.setDBFactory(DoPrivilegedUtil.wrap(new DBFactoryImpl()));
-
-		// Java properties
-
-		JavaDetector.isJDK5();
 
 		// ROME
 

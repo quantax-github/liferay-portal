@@ -23,6 +23,7 @@ import com.liferay.portal.model.Role;
 import com.liferay.portal.model.RoleConstants;
 import com.liferay.portal.model.User;
 import com.liferay.portal.service.RoleLocalServiceUtil;
+import com.liferay.portal.service.ServiceContext;
 import com.liferay.portal.service.ServiceTestUtil;
 import com.liferay.portal.service.UserGroupRoleLocalServiceUtil;
 import com.liferay.portal.service.UserLocalServiceUtil;
@@ -102,13 +103,21 @@ public class UserTestUtil {
 			ServiceTestUtil.randomString(), TestPropsValues.getGroupId());
 	}
 
+	public static User addUser(long groupId, Locale locale) throws Exception {
+		return addUser(
+			ServiceTestUtil.randomString(), false, locale,
+			ServiceTestUtil.randomString(), ServiceTestUtil.randomString(),
+			new long[] {groupId});
+	}
+
 	public static User addUser(
-			String screenName, boolean autoScreenName, Locale locale,
-			String firstName, String lastName, long[] groupIds)
+			long companyId, long userId, String screenName,
+			boolean autoScreenName, Locale locale, String firstName,
+			String lastName, long[] groupIds, ServiceContext serviceContext)
 		throws Exception {
 
 		User user = UserLocalServiceUtil.fetchUserByScreenName(
-			TestPropsValues.getCompanyId(), screenName);
+			companyId, screenName);
 
 		if (user != null) {
 			return user;
@@ -118,7 +127,8 @@ public class UserTestUtil {
 		String password1 = StringPool.BLANK;
 		String password2 = StringPool.BLANK;
 		String emailAddress =
-			"ServiceTestSuite." + ServiceTestUtil.nextLong() + "@liferay.com";
+			ServiceTestUtil.randomString() + ServiceTestUtil.nextLong() +
+				"@liferay.com";
 		long facebookId = 0;
 		String openId = StringPool.BLANK;
 		String middleName = StringPool.BLANK;
@@ -135,12 +145,22 @@ public class UserTestUtil {
 		boolean sendMail = false;
 
 		return UserLocalServiceUtil.addUser(
-			TestPropsValues.getUserId(), TestPropsValues.getCompanyId(),
-			autoPassword, password1, password2, autoScreenName, screenName,
-			emailAddress, facebookId, openId, locale, firstName, middleName,
-			lastName, prefixId, suffixId, male, birthdayMonth, birthdayDay,
-			birthdayYear, jobTitle, groupIds, organizationIds, roleIds,
-			userGroupIds, sendMail, ServiceTestUtil.getServiceContext());
+			userId, companyId, autoPassword, password1, password2,
+			autoScreenName, screenName, emailAddress, facebookId, openId,
+			locale, firstName, middleName, lastName, prefixId, suffixId, male,
+			birthdayMonth, birthdayDay, birthdayYear, jobTitle, groupIds,
+			organizationIds, roleIds, userGroupIds, sendMail, serviceContext);
+	}
+
+	public static User addUser(
+			String screenName, boolean autoScreenName, Locale locale,
+			String firstName, String lastName, long[] groupIds)
+		throws Exception {
+
+		return addUser(
+			TestPropsValues.getCompanyId(), TestPropsValues.getUserId(),
+			screenName, autoScreenName, locale, firstName, lastName, groupIds,
+			ServiceTestUtil.getServiceContext());
 	}
 
 	public static User addUser(

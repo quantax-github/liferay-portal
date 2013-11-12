@@ -34,7 +34,19 @@ String toolbarItem = ParamUtil.getString(request, "toolbarItem");
 				<portlet:param name="redirect" value="<%= viewFileEntryTypesURL %>" />
 			</portlet:renderURL>
 
-			<aui:nav-item href="<%= addFileEntryTypeURL %>" iconClass="icon-plus" label="add" selected='<%= toolbarItem.equals("add") %>' />
+			<aui:nav-item href="<%= addFileEntryTypeURL %>" iconCssClass="icon-plus" label="add" selected='<%= toolbarItem.equals("add") %>' />
 		</c:if>
 	</aui:nav>
+
+	<aui:nav-bar-search cssClass="pull-right">
+		<div class="form-search">
+			<liferay-portlet:renderURL varImpl="searchURL">
+				<portlet:param name="struts_action" value="<%= strutsAction %>" />
+			</liferay-portlet:renderURL>
+
+			<aui:form action="<%= searchURL.toString() %>" method="post" name="fm">
+				<liferay-ui:input-search />
+			</aui:form>
+		</div>
+	</aui:nav-bar-search>
 </aui:nav-bar>

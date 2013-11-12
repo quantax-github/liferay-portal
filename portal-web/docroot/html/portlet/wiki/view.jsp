@@ -51,11 +51,11 @@ boolean print = ParamUtil.getString(request, "viewMode").equals(Constants.PRINT)
 
 PortletURL viewPageURL = renderResponse.createRenderURL();
 
-if (portletName.equals(PortletKeys.WIKI)) {
-	viewPageURL.setParameter("struts_action", "/wiki/view");
+if (portletName.equals(PortletKeys.WIKI_DISPLAY)) {
+	viewPageURL.setParameter("struts_action", "/wiki/view_page");
 }
 else {
-	viewPageURL.setParameter("struts_action", "/wiki/view_page_activities");
+	viewPageURL.setParameter("struts_action", "/wiki/view");
 }
 
 viewPageURL.setParameter("nodeName", node.getName());
@@ -116,8 +116,10 @@ if (Validator.isNotNull(ParamUtil.getString(request, "title"))) {
 	AssetUtil.addLayoutTags(request, AssetTagLocalServiceUtil.getTags(WikiPage.class.getName(), wikiPage.getResourcePrimKey()));
 }
 
+AssetEntry layoutAssetEntry = null;
+
 if (wikiPage != null) {
-	AssetEntry layoutAssetEntry = AssetEntryLocalServiceUtil.getEntry(WikiPage.class.getName(), wikiPage.getResourcePrimKey());
+	layoutAssetEntry = AssetEntryLocalServiceUtil.getEntry(WikiPage.class.getName(), wikiPage.getResourcePrimKey());
 
 	request.setAttribute(WebKeys.LAYOUT_ASSET_ENTRY, layoutAssetEntry);
 }
@@ -171,6 +173,7 @@ long portletDisplayDDMTemplateId = PortletDisplayTemplateUtil.getPortletDisplayT
 
 		Map<String, Object> contextObjects = new HashMap<String, Object>();
 
+		contextObjects.put("assetEntry", layoutAssetEntry);
 		contextObjects.put("formattedContent", formattedContent);
 		%>
 

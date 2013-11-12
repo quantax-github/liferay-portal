@@ -19,6 +19,7 @@ import com.liferay.portal.kernel.test.ExecutionTestListeners;
 import com.liferay.portal.kernel.transaction.Transactional;
 import com.liferay.portal.kernel.util.FriendlyURLNormalizerUtil;
 import com.liferay.portal.kernel.util.StringPool;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.model.Group;
 import com.liferay.portal.model.GroupConstants;
 import com.liferay.portal.model.Layout;
@@ -289,7 +290,8 @@ public class AssetTagFinderTest {
 				siteGroup.getGroupId(), assetTagName);
 
 			Assert.assertEquals(
-				assetTagName.toLowerCase(), siteGroupAssetTag.getName());
+				StringUtil.toLowerCase(
+					assetTagName), siteGroupAssetTag.getName());
 		}
 		finally {
 			PermissionThreadLocal.setPermissionChecker(
@@ -306,7 +308,7 @@ public class AssetTagFinderTest {
 		String assetTagName = ServiceTestUtil.randomString();
 		String[] assetTagProperties = new String[] {"key:value"};
 
-		List<AssetTag> initialScopeGroupAssetTags=
+		List<AssetTag> initialScopeGroupAssetTags =
 			AssetTagFinderUtil.filterFindByG_N_P(
 				new long[] {scopeGroup.getGroupId()}, assetTagName,
 				assetTagProperties, QueryUtil.ALL_POS, QueryUtil.ALL_POS, null);

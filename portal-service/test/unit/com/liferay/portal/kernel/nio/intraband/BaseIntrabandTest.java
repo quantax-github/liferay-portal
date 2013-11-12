@@ -179,7 +179,6 @@ public class BaseIntrabandTest {
 
 			private final int _end;
 			private final int _start;
-
 		}
 
 		List<RegisterJob> registerJobs = new ArrayList<RegisterJob>(
@@ -1482,7 +1481,7 @@ public class BaseIntrabandTest {
 
 		sendSyncDatagramCompletionHandler.delivered(null);
 		sendSyncDatagramCompletionHandler.submitted(null);
-		sendSyncDatagramCompletionHandler.timeouted(null);
+		sendSyncDatagramCompletionHandler.timedOut(null);
 	}
 
 	protected void assertMessageStartWith(

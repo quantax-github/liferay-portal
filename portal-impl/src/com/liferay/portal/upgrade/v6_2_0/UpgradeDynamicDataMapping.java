@@ -15,8 +15,11 @@
 package com.liferay.portal.upgrade.v6_2_0;
 
 import com.liferay.portal.kernel.dao.jdbc.DataAccess;
+import com.liferay.portal.kernel.log.Log;
+import com.liferay.portal.kernel.log.LogFactoryUtil;
 import com.liferay.portal.kernel.upgrade.UpgradeProcess;
 import com.liferay.portal.kernel.util.ArrayUtil;
+import com.liferay.portal.kernel.util.StringUtil;
 import com.liferay.portal.kernel.xml.Document;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.kernel.xml.SAXReaderUtil;
@@ -56,9 +59,18 @@ public class UpgradeDynamicDataMapping extends UpgradeProcess {
 
 		long classNameId = PortalUtil.getClassNameId(DDMStructure.class);
 
-		runSQL("update DDMTemplate set classNameId = " + classNameId);
+		try {
+			runSQL("update DDMTemplate set classNameId = " + classNameId);
+		}
+		catch (Exception e) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(e, e);
+			}
+		}
 
 		updateStructures();
+
+		updateTemplates();
 	}
 
 	protected void updateMetadataElement(
@@ -104,6 +116,11 @@ public class UpgradeDynamicDataMapping extends UpgradeProcess {
 
 			ps.executeUpdate();
 		}
+		catch (SQLException sqle) {
+			if (_log.isWarnEnabled()) {
+				_log.warn(sqle, sqle);
+			}
+		}
 		finally {
 			DataAccess.cleanUp(con, ps, rs);
 		}
@@ -117,7 +134,8 @@ public class UpgradeDynamicDataMapping extends UpgradeProcess {
 		try {
 			con = DataAccess.getUpgradeOptimizedConnection();
 
-			ps = con.prepareStatement("select * from DDMStructure");
+			ps = con.prepareStatement(
+				"select structureId, structureKey, xsd from DDMStructure");
 
 			rs = ps.executeQuery();
 
@@ -127,8 +145,63 @@ public class UpgradeDynamicDataMapping extends UpgradeProcess {
 				String xsd = rs.getString("xsd");
 
 				updateStructure(
-					structureId, structureKey.trim().toUpperCase(),
+					structureId, StringUtil.toUpperCase(structureKey.trim()),
 					updateXSD(xsd));
+			}
+		}
+		finally {
+			DataAccess.cleanUp(con, ps, rs);
+		}
+	}
+
+	protected void updateTemplate(
+			long templateId, String templateKey, String script)
+		throws Exception {
+
+		Connection con = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			con = DataAccess.getUpgradeOptimizedConnection();
+
+			ps = con.prepareStatement(
+				"update DDMTemplate set templateKey = ?, script = ? where " +
+					"templateId = ?");
+
+			ps.setString(1, templateKey);
+			ps.setString(2, script);
+			ps.setLong(3, templateId);
+
+			ps.executeUpdate();
+		}
+		finally {
+			DataAccess.cleanUp(con, ps, rs);
+		}
+	}
+
+	protected void updateTemplates() throws Exception {
+		Connection con = null;
+		PreparedStatement ps = null;
+		ResultSet rs = null;
+
+		try {
+			con = DataAccess.getUpgradeOptimizedConnection();
+
+			ps = con.prepareStatement(
+				"select templateId, templateKey, script from DDMTemplate " +
+					"where language = 'xsd'");
+
+			rs = ps.executeQuery();
+
+			while (rs.next()) {
+				long templateId = rs.getLong("templateId");
+				String templateKey = rs.getString("templateKey");
+				String script = rs.getString("script");
+
+				updateTemplate(
+					templateId, StringUtil.toUpperCase(templateKey.trim()),
+					updateXSD(script));
 			}
 		}
 		finally {
@@ -161,7 +234,7 @@ public class UpgradeDynamicDataMapping extends UpgradeProcess {
 				"width",
 			},
 			new String[] {
-				"displayChildLabelAsValue", "fieldCssClass"
+				"acceptFiles", "displayChildLabelAsValue", "fieldCssClass"
 			});
 
 		List<Element> dynamicElementElements = element.elements(
@@ -171,5 +244,8 @@ public class UpgradeDynamicDataMapping extends UpgradeProcess {
 			updateXSDDynamicElement(dynamicElementElement);
 		}
 	}
+
+	private static Log _log = LogFactoryUtil.getLog(
+		UpgradeDynamicDataMapping.class);
 
 }

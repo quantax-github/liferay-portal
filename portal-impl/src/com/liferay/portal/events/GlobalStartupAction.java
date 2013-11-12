@@ -15,6 +15,7 @@
 package com.liferay.portal.events;
 
 import com.liferay.portal.deploy.DeployUtil;
+import com.liferay.portal.deploy.messaging.RequiredPluginsMessageListener;
 import com.liferay.portal.jcr.JCRFactoryUtil;
 import com.liferay.portal.kernel.deploy.auto.AutoDeployDir;
 import com.liferay.portal.kernel.deploy.auto.AutoDeployListener;
@@ -26,8 +27,15 @@ import com.liferay.portal.kernel.deploy.sandbox.SandboxDeployListener;
 import com.liferay.portal.kernel.deploy.sandbox.SandboxDeployUtil;
 import com.liferay.portal.kernel.events.SimpleAction;
 import com.liferay.portal.kernel.javadoc.JavadocManagerUtil;
+import com.liferay.portal.kernel.jsonwebservice.JSONWebServiceActionsManagerUtil;
 import com.liferay.portal.kernel.log.Log;
 import com.liferay.portal.kernel.log.LogFactoryUtil;
+import com.liferay.portal.kernel.scheduler.SchedulerEngineHelperUtil;
+import com.liferay.portal.kernel.scheduler.SchedulerEntry;
+import com.liferay.portal.kernel.scheduler.SchedulerEntryImpl;
+import com.liferay.portal.kernel.scheduler.StorageType;
+import com.liferay.portal.kernel.scheduler.TimeUnit;
+import com.liferay.portal.kernel.scheduler.TriggerType;
 import com.liferay.portal.kernel.util.GetterUtil;
 import com.liferay.portal.kernel.util.InfrastructureUtil;
 import com.liferay.portal.kernel.util.InstanceFactory;
@@ -162,6 +170,22 @@ public class GlobalStartupAction extends SimpleAction {
 		// Auto deploy
 
 		try {
+			File deployDir = new File(
+				PrefsPropsUtil.getString(
+					PropsKeys.AUTO_DEPLOY_DEPLOY_DIR,
+					PropsValues.AUTO_DEPLOY_DEPLOY_DIR));
+			File destDir = new File(DeployUtil.getAutoDeployDestDir());
+			long interval = PrefsPropsUtil.getLong(
+				PropsKeys.AUTO_DEPLOY_INTERVAL,
+				PropsValues.AUTO_DEPLOY_INTERVAL);
+
+			List<AutoDeployListener> autoDeployListeners =
+				getAutoDeployListeners(false);
+
+			AutoDeployDir autoDeployDir = new AutoDeployDir(
+				AutoDeployDir.DEFAULT_NAME, deployDir, destDir, interval,
+				autoDeployListeners);
+
 			if (PrefsPropsUtil.getBoolean(
 					PropsKeys.AUTO_DEPLOY_ENABLED,
 					PropsValues.AUTO_DEPLOY_ENABLED)) {
@@ -169,22 +193,6 @@ public class GlobalStartupAction extends SimpleAction {
 				if (_log.isInfoEnabled()) {
 					_log.info("Registering auto deploy directories");
 				}
-
-				File deployDir = new File(
-					PrefsPropsUtil.getString(
-						PropsKeys.AUTO_DEPLOY_DEPLOY_DIR,
-						PropsValues.AUTO_DEPLOY_DEPLOY_DIR));
-				File destDir = new File(DeployUtil.getAutoDeployDestDir());
-				long interval = PrefsPropsUtil.getLong(
-					PropsKeys.AUTO_DEPLOY_INTERVAL,
-					PropsValues.AUTO_DEPLOY_INTERVAL);
-
-				List<AutoDeployListener> autoDeployListeners =
-					getAutoDeployListeners(false);
-
-				AutoDeployDir autoDeployDir = new AutoDeployDir(
-					AutoDeployDir.DEFAULT_NAME, deployDir, destDir, interval,
-					autoDeployListeners);
 
 				AutoDeployUtil.registerDir(autoDeployDir);
 			}
@@ -301,6 +309,29 @@ public class GlobalStartupAction extends SimpleAction {
 			if (_log.isWarnEnabled()) {
 				_log.warn(e.getMessage());
 			}
+		}
+
+		// JSON web service
+
+		JSONWebServiceActionsManagerUtil.registerServletContext(
+			StringPool.BLANK);
+
+		// Plugins
+
+		try {
+			SchedulerEntry schedulerEntry = new SchedulerEntryImpl();
+
+			schedulerEntry.setEventListenerClass(
+				RequiredPluginsMessageListener.class.getName());
+			schedulerEntry.setTimeUnit(TimeUnit.MINUTE);
+			schedulerEntry.setTriggerType(TriggerType.SIMPLE);
+			schedulerEntry.setTriggerValue(1);
+
+			SchedulerEngineHelperUtil.schedule(
+				schedulerEntry, StorageType.MEMORY, null, 0);
+		}
+		catch (Exception e) {
+			_log.error(e, e);
 		}
 
 		// POP server

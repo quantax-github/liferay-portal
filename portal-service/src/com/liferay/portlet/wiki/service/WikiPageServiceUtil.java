@@ -14,6 +14,8 @@
 
 package com.liferay.portlet.wiki.service;
 
+import aQute.bnd.annotation.ProviderType;
+
 import com.liferay.portal.kernel.bean.PortalBeanLocatorUtil;
 import com.liferay.portal.kernel.util.ReferenceRegistry;
 
@@ -31,6 +33,7 @@ import com.liferay.portal.kernel.util.ReferenceRegistry;
  * @see com.liferay.portlet.wiki.service.impl.WikiPageServiceImpl
  * @generated
  */
+@ProviderType
 public class WikiPageServiceUtil {
 	/*
 	 * NOTE FOR DEVELOPERS:
@@ -352,10 +355,11 @@ public class WikiPageServiceUtil {
 		return getService().movePageAttachmentToTrash(nodeId, title, fileName);
 	}
 
-	public static void movePageToTrash(long nodeId, java.lang.String title)
+	public static com.liferay.portlet.wiki.model.WikiPage movePageToTrash(
+		long nodeId, java.lang.String title)
 		throws com.liferay.portal.kernel.exception.PortalException,
 			com.liferay.portal.kernel.exception.SystemException {
-		getService().movePageToTrash(nodeId, title);
+		return getService().movePageToTrash(nodeId, title);
 	}
 
 	public static com.liferay.portlet.wiki.model.WikiPage movePageToTrash(

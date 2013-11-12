@@ -14,6 +14,8 @@
 
 package com.liferay.portlet.journal.service;
 
+import aQute.bnd.annotation.ProviderType;
+
 import com.liferay.portal.service.ServiceWrapper;
 
 /**
@@ -23,6 +25,7 @@ import com.liferay.portal.service.ServiceWrapper;
  * @see JournalFolderService
  * @generated
  */
+@ProviderType
 public class JournalFolderServiceWrapper implements JournalFolderService,
 	ServiceWrapper<JournalFolderService> {
 	public JournalFolderServiceWrapper(
@@ -126,6 +129,15 @@ public class JournalFolderServiceWrapper implements JournalFolderService,
 		throws com.liferay.portal.kernel.exception.SystemException {
 		return _journalFolderService.getFolders(groupId, parentFolderId,
 			status, start, end);
+	}
+
+	@Override
+	public java.util.List<java.lang.Object> getFoldersAndArticles(
+		long groupId, long folderId, int status, int start, int end,
+		com.liferay.portal.kernel.util.OrderByComparator obc)
+		throws com.liferay.portal.kernel.exception.SystemException {
+		return _journalFolderService.getFoldersAndArticles(groupId, folderId,
+			status, start, end, obc);
 	}
 
 	@Override

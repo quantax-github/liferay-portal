@@ -426,6 +426,22 @@ public class SeleniumBuilderContextTest {
 	}
 
 	@Test
+	public void testMacroNotElement1006() throws Exception {
+		test(
+			"MacroNotElement1006.macro",
+			"Error 1006: Invalid action attribute value in " +
+				_DIR_NAME + "/MacroNotElement1006.macro:5");
+	}
+
+	@Test
+	public void testMacroNotElement1010() throws Exception {
+		test(
+			"MacroNotElement1010.macro",
+			"Error 1010: Invalid locator-key PAGE_NAME_X at " + _DIR_NAME +
+				"/MacroNotElement1010.macro:5");
+	}
+
+	@Test
 	public void testMacroVarElement1010() throws Exception {
 		test(
 			"MacroVarElement1010.macro",
@@ -532,36 +548,6 @@ public class SeleniumBuilderContextTest {
 			"CPBlogsAcceptance.testcase",
 			"Error 1008: Duplicate file name CPBlogsAcceptance at " +
 				_DIR_NAME + "/CPBlogsAcceptance.testcase");
-	}
-
-	@Test
-	public void testTestSuite() throws Exception {
-		test("TestSuite.testsuite");
-	}
-
-	@Test
-	public void testTestSuiteExecuteElement1011_1() throws Exception {
-		test(
-			"TestSuiteExecuteElement1011_1.testsuite",
-			"Error 1011: Invalid test-case name test-case-fail at " +
-				_DIR_NAME + "/TestSuiteExecuteElement1011_1.testsuite:2");
-	}
-
-	@Test
-	public void testTestSuiteExecuteElement1011_2() throws Exception {
-		test(
-			"TestSuiteExecuteElement1011_2.testsuite",
-			"Error 1011: Invalid test-suite name test-suite-fail at " +
-				_DIR_NAME + "/TestSuiteExecuteElement1011_2.testsuite:2");
-	}
-
-	@Test
-	public void testTestSuiteFileName1008() throws Exception {
-		test(
-			"EndUserCollaborationAcceptance.testsuite",
-			"Error 1008: Duplicate file name EndUserCollaborationAcceptance " +
-				"at " + _DIR_NAME +
-				"/EndUserCollaborationAcceptance.testsuite");
 	}
 
 	protected void test(String fileName) throws Exception {

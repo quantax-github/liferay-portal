@@ -91,19 +91,16 @@ public class RepositoryStagedModelDataHandler
 
 		portletDataContext.addClassedModel(
 			repositoryElement, ExportImportPathUtil.getModelPath(repository),
-			repository, DLPortletDataHandler.NAMESPACE);
+			repository);
 
 		List<RepositoryEntry> repositoryEntries =
 			RepositoryEntryLocalServiceUtil.getRepositoryEntries(
 				repository.getRepositoryId());
 
 		for (RepositoryEntry repositoryEntry : repositoryEntries) {
-			StagedModelDataHandlerUtil.exportStagedModel(
-				portletDataContext, repositoryEntry);
-
-			portletDataContext.addReferenceElement(
-				repository, repositoryElement, repositoryEntry,
-				PortletDataContext.REFERENCE_TYPE_CHILD, false);
+			StagedModelDataHandlerUtil.exportReferenceStagedModel(
+				portletDataContext, repository, repositoryEntry,
+				PortletDataContext.REFERENCE_TYPE_CHILD);
 		}
 	}
 
@@ -115,7 +112,7 @@ public class RepositoryStagedModelDataHandler
 		long userId = portletDataContext.getUserId(repository.getUserUuid());
 
 		ServiceContext serviceContext = portletDataContext.createServiceContext(
-			repository, DLPortletDataHandler.NAMESPACE);
+			repository);
 
 		Repository importedRepository = null;
 
@@ -190,17 +187,10 @@ public class RepositoryStagedModelDataHandler
 			}
 		}
 
-		portletDataContext.importClassedModel(
-			repository, importedRepository, DLPortletDataHandler.NAMESPACE);
+		portletDataContext.importClassedModel(repository, importedRepository);
 
-		List<Element> repositoryEntryElements =
-			portletDataContext.getReferenceDataElements(
-				repository, RepositoryEntry.class);
-
-		for (Element repositoryEntryElement : repositoryEntryElements) {
-			StagedModelDataHandlerUtil.importStagedModel(
-				portletDataContext, repositoryEntryElement);
-		}
+		StagedModelDataHandlerUtil.importReferenceStagedModels(
+			portletDataContext, repository, RepositoryEntry.class);
 	}
 
 	private static Log _log = LogFactoryUtil.getLog(

@@ -51,7 +51,7 @@ MBThread thread = (MBThread)request.getAttribute("edit_message.jsp-thread");
 						%>
 
 						<c:if test="<%= Validator.isNotNull(ranks[1]) %>">
-							<div class="thread-user-role thread-user-role-<%= ranks[1].toLowerCase() %>"><%= ranks[1] %></div>
+							<div class="thread-user-role thread-user-role-<%= StringUtil.toLowerCase(ranks[1]) %>"><%= ranks[1] %></div>
 						</c:if>
 
 						<c:if test="<%= Validator.isNotNull(ranks[0]) %>">
@@ -332,12 +332,6 @@ MBThread thread = (MBThread)request.getAttribute("edit_message.jsp-thread");
 								for (FileEntry fileEntry : attachmentsFileEntries) {
 								%>
 
-									<portlet:resourceURL var="attachmentURL">
-										<portlet:param name="struts_action" value="/message_boards/get_message_attachment" />
-										<portlet:param name="messageId" value="<%= String.valueOf(message.getMessageId()) %>" />
-										<portlet:param name="attachment" value="<%= fileEntry.getTitle() %>" />
-									</portlet:resourceURL>
-
 									<li class="message-attachment">
 
 										<%
@@ -353,7 +347,7 @@ MBThread thread = (MBThread)request.getAttribute("edit_message.jsp-thread");
 											image='<%= "../file_system/small/" + DLUtil.getFileIcon(fileEntry.getExtension()) %>'
 											label="<%= true %>"
 											message="<%= sb.toString() %>"
-											url="<%= attachmentURL %>"
+											url="<%= PortletFileRepositoryUtil.getPortletFileEntryURL(themeDisplay, fileEntry, StringPool.BLANK) %>"
 										/>
 									</li>
 
@@ -457,14 +451,14 @@ MBThread thread = (MBThread)request.getAttribute("edit_message.jsp-thread");
 							<liferay-ui:icon
 								image="permissions"
 								label="<%= true %>"
-								linkCssClass="use-dialog"
 								method="get"
 								url="<%= permissionsURL %>"
+								useDialog="<%= true %>"
 							/>
 						</li>
 					</c:if>
 
-					 <c:if test="<%= (message.getParentMessageId() != MBMessageConstants.DEFAULT_PARENT_MESSAGE_ID) && MBCategoryPermission.contains(permissionChecker, scopeGroupId, category.getCategoryId(), ActionKeys.MOVE_THREAD) %>">
+					<c:if test="<%= (message.getParentMessageId() != MBMessageConstants.DEFAULT_PARENT_MESSAGE_ID) && MBCategoryPermission.contains(permissionChecker, scopeGroupId, category.getCategoryId(), ActionKeys.MOVE_THREAD) %>">
 						<li>
 							<portlet:renderURL var="splitThreadURL">
 								<portlet:param name="struts_action" value="/message_boards/split_thread" />
@@ -482,7 +476,7 @@ MBThread thread = (MBThread)request.getAttribute("edit_message.jsp-thread");
 						</li>
 					</c:if>
 
-					<c:if test="<%= !thread.isLocked() && MBMessagePermission.contains(permissionChecker, message, ActionKeys.DELETE) %>">
+					<c:if test="<%= !thread.isLocked() && (thread.getMessageCount() > 1) && MBMessagePermission.contains(permissionChecker, message, ActionKeys.DELETE) %>">
 						<li>
 
 							<%

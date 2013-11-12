@@ -35,6 +35,7 @@ portletURL.setParameter("ruleGroupInstanceId", String.valueOf(ruleGroupInstanceI
 <liferay-ui:header
 	backURL="<%= redirect %>"
 	localizeTitle="<%= false %>"
+	showBackURL="<%= !windowState.equals(LiferayWindowState.POP_UP) %>"
 	title='<%= LanguageUtil.format(pageContext, "actions-for-x", ruleGroup.getName(locale), false) %>'
 />
 
@@ -80,7 +81,7 @@ portletURL.setParameter("ruleGroupInstanceId", String.valueOf(ruleGroupInstanceI
 
 			<aui:nav-bar>
 				<aui:nav>
-					<aui:nav-item href="<%= addURL %>" iconClass="icon-plus" label="add-action" />
+					<aui:nav-item href="<%= addURL %>" iconCssClass="icon-plus" label="add-action" />
 				</aui:nav>
 			</aui:nav-bar>
 		</c:if>

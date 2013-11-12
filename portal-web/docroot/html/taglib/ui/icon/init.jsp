@@ -38,6 +38,8 @@ boolean iconMenuShowWhenSingleIcon = GetterUtil.getBoolean((String)request.getAt
 Boolean iconMenuSingleIcon = (Boolean)request.getAttribute("liferay-ui:icon-menu:single-icon");
 
 String alt = (String)request.getAttribute("liferay-ui:icon:alt");
+String ariaRole = (String)request.getAttribute("liferay-ui:icon:ariaRole");
+String iconCssClass = (String)request.getAttribute("liferay-ui:icon:iconCssClass");
 String id = (String)request.getAttribute("liferay-ui:icon:id");
 String image = (String)request.getAttribute("liferay-ui:icon:image");
 String imageHover = (String)request.getAttribute("liferay-ui:icon:imageHover");
@@ -55,13 +57,10 @@ String srcHover = (String)request.getAttribute("liferay-ui:icon:srcHover");
 boolean toolTip = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:icon:toolTip"));
 String target = GetterUtil.getString((String)request.getAttribute("liferay-ui:icon:target"));
 String url = GetterUtil.getString((String)request.getAttribute("liferay-ui:icon:url"));
+boolean useDialog = GetterUtil.getBoolean((String)request.getAttribute("liferay-ui:icon:useDialog"));
 
 if (data == null) {
 	data = new HashMap<String, Object>(1);
-}
-
-if (Validator.isNull(data.get("title"))) {
-	data.put("title", localizeMessage ? LanguageUtil.get(pageContext, message) : message);
 }
 
 if ((iconListIconCount != null) || (iconListSingleIcon != null)) {
@@ -74,6 +73,11 @@ if ((iconMenuIconCount != null) || (iconMenuSingleIcon != null)) {
 
 if (message == null) {
 	message = StringUtil.replace(image, StringPool.UNDERLINE, StringPool.DASH);
+	message = StringUtil.replace(message, "../aui/", StringPool.BLANK);
+}
+
+if (useDialog && Validator.isNull(data.get("title"))) {
+	data.put("title", HtmlUtil.stripHtml(localizeMessage ? LanguageUtil.get(pageContext, message) : message));
 }
 
 if (Validator.isNull(method)) {

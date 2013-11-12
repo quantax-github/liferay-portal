@@ -70,23 +70,12 @@
 	margin-bottom: 1.5em;
 }
 
-.lfr-input-time {
-	float: left;
-	clear: right;
-}
-
-.gecko .lfr-input-time, .ie .lfr-input-time {
-	padding-left: 2px;
-}
-
 .lfr-change-logo {
 	display: block;
 	margin-bottom: 10px;
 }
 
 .lfr-portrait-preview {
-	float: left;
-
 	&:after {
 		clear: both;
 		content: ".";
@@ -104,6 +93,10 @@
 
 .ie .float-container {
 	height: 1%;
+}
+
+.gecko .lfr-portrait-editor {
+	display: table-column;
 }
 
 /* Skin */

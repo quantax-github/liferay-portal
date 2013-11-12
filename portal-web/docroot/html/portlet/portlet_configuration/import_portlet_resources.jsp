@@ -21,9 +21,11 @@ String redirect = ParamUtil.getString(request, "redirect");
 
 Layout exportableLayout = ExportImportHelperUtil.getExportableLayout(themeDisplay);
 
-FileEntry fileEntry = ExportImportHelperUtil.getTempFileEntry(themeDisplay.getScopeGroupId(), themeDisplay.getUserId(), ExportImportHelper.TEMP_FOLDER_NAME + selPortlet.getPortletId());
+long groupId = ParamUtil.getLong(request, "groupId", scopeGroupId);
 
-ManifestSummary manifestSummary = ExportImportHelperUtil.getManifestSummary(user.getUserId(), themeDisplay.getSiteGroupId(), new HashMap<String, String[]>(), fileEntry);
+FileEntry fileEntry = ExportImportHelperUtil.getTempFileEntry(groupId, themeDisplay.getUserId(), ExportImportHelper.TEMP_FOLDER_NAME + selPortlet.getPortletId());
+
+ManifestSummary manifestSummary = ExportImportHelperUtil.getManifestSummary(themeDisplay.getUserId(), groupId, new HashMap<String, String[]>(), fileEntry);
 %>
 
 <portlet:actionURL var="importPortletActionURL">
@@ -44,7 +46,7 @@ ManifestSummary manifestSummary = ExportImportHelperUtil.getManifestSummary(user
 	<aui:input name="tabs2" type="hidden" value="import" />
 	<aui:input name="redirect" type="hidden" value="<%= importPortletRenderURL %>" />
 	<aui:input name="plid" type="hidden" value="<%= exportableLayout.getPlid() %>" />
-	<aui:input name="groupId" type="hidden" value="<%= themeDisplay.getScopeGroupId() %>" />
+	<aui:input name="groupId" type="hidden" value="<%= groupId %>" />
 	<aui:input name="portletResource" type="hidden" value="<%= portletResource %>" />
 
 	<div class="export-dialog-tree">
@@ -91,7 +93,7 @@ ManifestSummary manifestSummary = ExportImportHelperUtil.getManifestSummary(user
 			PortletDataHandlerControl[] configurationControls = portletDataHandler.getImportConfigurationControls(selPortlet, manifestSummary);
 			%>
 
-			<c:if test="<%= (configurationControls != null) && (configurationControls.length > 0) %>">
+			<c:if test="<%= ArrayUtil.isNotEmpty(configurationControls) %>">
 				<aui:fieldset cssClass="options-group" label="application">
 					<ul class="lfr-tree select-options unstyled">
 						<li class="options">
@@ -146,7 +148,7 @@ ManifestSummary manifestSummary = ExportImportHelperUtil.getManifestSummary(user
 			long modelDeletionCount = manifestSummary.getModelDeletionCount(portletDataHandler.getDeletionSystemEventStagedModelTypes());
 			%>
 
-			<c:if test="<%= (importModelCount != 0) || (modelDeletionCount != 0) %>">
+			<c:if test="<%= !portletDataHandler.isDisplayPortlet() && ((importModelCount != 0) || (modelDeletionCount != 0)) %>">
 				<aui:fieldset cssClass="options-group" label="content">
 					<ul class="lfr-tree select-options unstyled">
 						<li class="options">
@@ -159,20 +161,20 @@ ManifestSummary manifestSummary = ExportImportHelperUtil.getManifestSummary(user
 										<span class="badge badge-warning deletions"><%= modelDeletionCount > 0 ? (modelDeletionCount + StringPool.SPACE + LanguageUtil.get(pageContext, "deletions")) : StringPool.BLANK %></span>
 									</liferay-util:buffer>
 
-									<aui:input label='<%= LanguageUtil.get(pageContext, "content") + badgeHTML %>' name='<%= PortletDataHandlerKeys.PORTLET_DATA + "_" + selPortlet.getRootPortletId() %>' type="checkbox" value="<%= true %>" />
+									<aui:input label='<%= LanguageUtil.get(pageContext, "content") + badgeHTML %>' name="<%= PortletDataHandlerKeys.PORTLET_DATA + StringPool.UNDERLINE + selPortlet.getRootPortletId() %>" type="checkbox" value="<%= true %>" />
 
 									<%
 									PortletDataHandlerControl[] importControls = portletDataHandler.getImportControls();
 									PortletDataHandlerControl[] metadataControls = portletDataHandler.getImportMetadataControls();
 
-									if (Validator.isNotNull(importControls) || Validator.isNotNull(metadataControls)) {
+									if (ArrayUtil.isNotEmpty(importControls) || ArrayUtil.isNotEmpty(metadataControls)) {
 									%>
 
 										<div class="hide" id="<portlet:namespace />content_<%= selPortlet.getRootPortletId() %>">
 											<ul class="lfr-tree unstyled">
 												<li class="tree-item">
 													<aui:fieldset cssClass="portlet-type-data-section" label="content">
-														<aui:field-wrapper label='<%= Validator.isNotNull(metadataControls) ? "content" : StringPool.BLANK %>'>
+														<aui:field-wrapper label='<%= ArrayUtil.isNotEmpty(metadataControls) ? "content" : StringPool.BLANK %>'>
 															<ul class="lfr-tree unstyled">
 																<li class="tree-item">
 																	<aui:input data-name='<%= LanguageUtil.get(locale, "delete-portlet-data") %>' label="delete-portlet-data-before-importing" name="<%= PortletDataHandlerKeys.DELETE_PORTLET_DATA %>" type="checkbox" />
@@ -214,7 +216,7 @@ ManifestSummary manifestSummary = ExportImportHelperUtil.getManifestSummary(user
 
 																PortletDataHandlerControl[] childrenControls = control.getChildren();
 
-																if ((childrenControls != null) && (childrenControls.length > 0)) {
+																if (ArrayUtil.isNotEmpty(childrenControls)) {
 																	request.setAttribute("render_controls.jsp-controls", childrenControls);
 																%>
 
@@ -314,7 +316,7 @@ ManifestSummary manifestSummary = ExportImportHelperUtil.getManifestSummary(user
 
 			<aui:button href="<%= importPortletURL %>" name="back1" value="back" />
 
-			<aui:button cssClass="btn-primary" name="continue" value="continue" />
+			<aui:button name="continue" primary="<%= true %>" value="continue" />
 		</div>
 
 		<div class="hide" id="<portlet:namespace />importStrategy">
@@ -323,7 +325,7 @@ ManifestSummary manifestSummary = ExportImportHelperUtil.getManifestSummary(user
 
 				<aui:input data-name='<%= LanguageUtil.get(locale, "mirror-with-overwriting") %>' helpMessage="import-data-strategy-mirror-with-overwriting-help" id="mirrorWithOverwriting" label="mirror-with-overwriting" name="<%= PortletDataHandlerKeys.DATA_STRATEGY %>" type="radio" value="<%= PortletDataHandlerKeys.DATA_STRATEGY_MIRROR_OVERWRITE %>" />
 
-				<aui:input data-name='<%= LanguageUtil.get(locale, "copy-as-new") %>' helpMessage="import-data-strategy-copy-as-new-help" id="copyAsNew" label="copy-as-new" name="<%= PortletDataHandlerKeys.DATA_STRATEGY %>" type="radio" value="<%= PortletDataHandlerKeys.DATA_STRATEGY_COPY_AS_NEW %>" />
+				<aui:input data-name='<%= LanguageUtil.get(locale, "copy-as-new") %>' disabled="<%= !portletDataHandler.isSupportsDataStrategyCopyAsNew() %>" helpMessage='<%= portletDataHandler.isSupportsDataStrategyCopyAsNew() ? "import-data-strategy-copy-as-new-help" : "not-supported" %>' id="copyAsNew" label="copy-as-new" name="<%= PortletDataHandlerKeys.DATA_STRATEGY %>" type="radio" value="<%= PortletDataHandlerKeys.DATA_STRATEGY_COPY_AS_NEW %>" />
 			</aui:fieldset>
 
 			<aui:fieldset cssClass="options-group" label="authorship-of-the-content">
@@ -346,7 +348,7 @@ ManifestSummary manifestSummary = ExportImportHelperUtil.getManifestSummary(user
 </aui:script>
 
 <aui:script use="aui-base">
-	A.one(<portlet:namespace />continue).on(
+	A.one('#<portlet:namespace />continue').on(
 		'click',
 		function() {
 			A.one('#<portlet:namespace />importConfiguration').hide()
@@ -354,8 +356,7 @@ ManifestSummary manifestSummary = ExportImportHelperUtil.getManifestSummary(user
 		}
 	);
 
-	A.one(<portlet:namespace />back).on(
-		'click',
+	A.one('#<portlet:namespace />back').on(
 		'click',
 		function() {
 			A.one('#<portlet:namespace />importConfiguration').show()

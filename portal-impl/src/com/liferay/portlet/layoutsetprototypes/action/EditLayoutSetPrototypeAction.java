@@ -18,6 +18,7 @@ import com.liferay.portal.NoSuchLayoutSetPrototypeException;
 import com.liferay.portal.RequiredLayoutSetPrototypeException;
 import com.liferay.portal.kernel.servlet.SessionErrors;
 import com.liferay.portal.kernel.util.Constants;
+import com.liferay.portal.kernel.util.HttpUtil;
 import com.liferay.portal.kernel.util.LocalizationUtil;
 import com.liferay.portal.kernel.util.ParamUtil;
 import com.liferay.portal.kernel.util.StringUtil;
@@ -70,6 +71,8 @@ public class EditLayoutSetPrototypeAction extends PortletAction {
 
 		try {
 			if (cmd.equals(Constants.ADD) || cmd.equals(Constants.UPDATE)) {
+				hideDefaultSuccessMessage(actionRequest);
+
 				LayoutSetPrototype layoutSetPrototype =
 					updateLayoutSetPrototype(actionRequest);
 
@@ -87,6 +90,16 @@ public class EditLayoutSetPrototypeAction extends PortletAction {
 					PortalUtil.getSiteAdministrationURL(
 						actionResponse, siteThemeDisplay,
 						PortletKeys.SITE_TEMPLATE_SETTINGS);
+
+				String controlPanelURL = HttpUtil.setParameter(
+					themeDisplay.getURLControlPanel(), "p_p_id",
+					PortletKeys.LAYOUT_SET_PROTOTYPE);
+
+				controlPanelURL = HttpUtil.setParameter(
+					controlPanelURL, "controlPanelCategory",
+					themeDisplay.getControlPanelCategory());
+
+				siteAdministrationURL.setParameter("redirect", controlPanelURL);
 
 				redirect = siteAdministrationURL.toString();
 			}

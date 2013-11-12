@@ -65,6 +65,10 @@ public class EvaluateLogTest extends BaseTestCase {
 				continue;
 			}
 
+			if (line.contains("INFO:")) {
+				continue;
+			}
+
 			if (line.matches(
 					".*The web application \\[.*\\] appears to have started " +
 						"a thread.*")) {
@@ -158,6 +162,32 @@ public class EvaluateLogTest extends BaseTestCase {
 			// LPS-37574
 
 			if (line.contains("java.util.zip.ZipException: ZipFile closed")) {
+				continue;
+			}
+
+			// LPS-39742
+
+			if (line.contains("java.lang.IllegalStateException")) {
+				continue;
+			}
+
+			// LPS-41257
+
+			if (line.matches(
+					".*The web application \\[\\] created a ThreadLocal with " +
+						"key of type.*")) {
+
+				if (line.contains("[de.schlichtherle")) {
+					continue;
+				}
+			}
+
+			// LPS-41863
+
+			if (line.matches(
+					".*[org.hibernate.engine.jdbc.JdbcSupportLoader] (MSC " +
+						"service thread .*) Disabling contextual LOB .*")) {
+
 				continue;
 			}
 

@@ -885,15 +885,17 @@ public class PortalUtil {
 		return getPortal().getLocale(request, response, initialize);
 	}
 
-	public static Locale getLocale(RenderRequest renderRequest) {
-		return getPortal().getLocale(renderRequest);
+	public static Locale getLocale(PortletRequest portletRequest) {
+		return getPortal().getLocale(portletRequest);
 	}
 
 	public static String getLocalizedFriendlyURL(
-			HttpServletRequest request, Layout layout, Locale locale)
+			HttpServletRequest request, Layout layout, Locale locale,
+			Locale originalLocale)
 		throws Exception {
 
-		return getPortal().getLocalizedFriendlyURL(request, layout, locale);
+		return getPortal().getLocalizedFriendlyURL(
+			request, layout, locale, originalLocale);
 	}
 
 	public static String getMailId(
@@ -953,6 +955,18 @@ public class PortalUtil {
 
 	public static String getPathContext() {
 		return getPortal().getPathContext();
+	}
+
+	public static String getPathContext(HttpServletRequest request) {
+		return getPortal().getPathContext(request);
+	}
+
+	public static String getPathContext(PortletRequest portletRequest) {
+		return getPortal().getPathContext(portletRequest);
+	}
+
+	public static String getPathContext(String contextPath) {
+		return getPortal().getPathContext(contextPath);
 	}
 
 	public static String getPathFriendlyURLPrivateGroup() {
@@ -1314,6 +1328,10 @@ public class PortalUtil {
 		throws PortalException, SystemException {
 
 		return getPortal().getSelectedUser(portletRequest, checkPermission);
+	}
+
+	public static String getServletContextName() {
+		return getPortal().getServletContextName();
 	}
 
 	public static Map<String, List<Portlet>> getSiteAdministrationCategoriesMap(
@@ -1718,6 +1736,12 @@ public class PortalUtil {
 
 	public static boolean isLayoutSitemapable(Layout layout) {
 		return getPortal().isLayoutSitemapable(layout);
+	}
+
+	public static boolean isLoginRedirectRequired(HttpServletRequest request)
+		throws SystemException {
+
+		return getPortal().isLoginRedirectRequired(request);
 	}
 
 	public static boolean isMethodGet(PortletRequest portletRequest) {

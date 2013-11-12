@@ -84,6 +84,9 @@ public class GroupFinderImpl
 	public static final String FIND_BY_C_C =
 		GroupFinder.class.getName() + ".findByC_C";
 
+	public static final String FIND_BY_C_P =
+		GroupFinder.class.getName() + ".findByC_P";
+
 	public static final String FIND_BY_C_N =
 		GroupFinder.class.getName() + ".findByC_N";
 
@@ -119,9 +122,6 @@ public class GroupFinderImpl
 
 	public static final String JOIN_BY_PAGE_COUNT =
 		GroupFinder.class.getName() + ".joinByPageCount";
-
-	public static final String JOIN_BY_ROLE_PERMISSIONS =
-		GroupFinder.class.getName() + ".joinByRolePermissions";
 
 	public static final String JOIN_BY_ROLE_RESOURCE_PERMISSIONS =
 		GroupFinder.class.getName() + ".joinByRoleResourcePermissions";
@@ -589,6 +589,46 @@ public class GroupFinderImpl
 			}
 
 			return groups;
+		}
+		catch (Exception e) {
+			throw new SystemException(e);
+		}
+		finally {
+			closeSession(session);
+		}
+	}
+
+	@Override
+	public List<Long> findByC_P(
+			long companyId, long parentGroupId, long previousGroupId, int size)
+		throws SystemException {
+
+		Session session = null;
+
+		try {
+			session = openSession();
+
+			String sql = CustomSQLUtil.get(FIND_BY_C_P);
+
+			if (previousGroupId <= 0) {
+				sql = StringUtil.replace(
+					sql, "(groupId > ?) AND", StringPool.BLANK);
+			}
+
+			SQLQuery q = session.createSQLQuery(sql);
+
+			q.addScalar("groupId", Type.LONG);
+
+			QueryPos qPos = QueryPos.getInstance(q);
+
+			if (previousGroupId > 0) {
+				qPos.add(previousGroupId);
+			}
+
+			qPos.add(companyId);
+			qPos.add(parentGroupId);
+
+			return (List<Long>)QueryUtil.list(q, getDialect(), 0, size);
 		}
 		catch (Exception e) {
 			throw new SystemException(e);
@@ -1337,9 +1377,6 @@ public class GroupFinderImpl
 			"membershipRestriction",
 			_removeWhere(CustomSQLUtil.get(JOIN_BY_MEMBERSHIP_RESTRICTION)));
 		joinMap.put(
-			"rolePermissions",
-			_removeWhere(CustomSQLUtil.get(JOIN_BY_ROLE_PERMISSIONS)));
-		joinMap.put(
 			"rolePermissions_6",
 			_removeWhere(CustomSQLUtil.get(JOIN_BY_ROLE_RESOURCE_PERMISSIONS)));
 		joinMap.put(
@@ -1393,9 +1430,6 @@ public class GroupFinderImpl
 			_getCondition(CustomSQLUtil.get(JOIN_BY_MEMBERSHIP_RESTRICTION)));
 		whereMap.put(
 			"pageCount", _getCondition(CustomSQLUtil.get(JOIN_BY_PAGE_COUNT)));
-		whereMap.put(
-			"rolePermissions",
-			_getCondition(CustomSQLUtil.get(JOIN_BY_ROLE_PERMISSIONS)));
 		whereMap.put(
 			"rolePermissions_6",
 			_getCondition(

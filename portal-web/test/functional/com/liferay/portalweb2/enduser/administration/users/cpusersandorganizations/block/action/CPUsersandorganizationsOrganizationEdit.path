@@ -35,7 +35,7 @@
 </tr>
 <tr>
 	<td>SUCCESS_MESSAGE</td>
-	<td>//div[@class='alert alert-success']</td>
+	<td>//div[contains(@class,'alert') and contains(@class,'alert-success')]</td>
 	<td></td>
 </tr>
 <tr>
@@ -72,7 +72,7 @@
 </tr>
 <tr>
 	<td>DETAILS_TYPE</td>
-	<td>//div[@class='control-group field-wrapper']</td>
+	<td>//input[@value='${key_orgType}' and @type='text']</td>
 	<td></td>
 </tr>
 <tr>

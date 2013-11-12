@@ -20,6 +20,7 @@ import com.liferay.portal.kernel.lar.BaseStagedModelDataHandler;
 import com.liferay.portal.kernel.lar.ExportImportPathUtil;
 import com.liferay.portal.kernel.lar.PortletDataContext;
 import com.liferay.portal.kernel.lar.StagedModelDataHandlerUtil;
+import com.liferay.portal.kernel.trash.TrashHandler;
 import com.liferay.portal.kernel.util.MapUtil;
 import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.service.ServiceContext;
@@ -75,8 +76,9 @@ public class MBCategoryStagedModelDataHandler
 		}
 
 		if (category.getParentCategory() != null) {
-			StagedModelDataHandlerUtil.exportStagedModel(
-				portletDataContext, category.getParentCategory());
+			StagedModelDataHandlerUtil.exportReferenceStagedModel(
+				portletDataContext, category, category.getParentCategory(),
+				PortletDataContext.REFERENCE_TYPE_PARENT);
 		}
 
 		Element categoryElement = portletDataContext.getExportDataElement(
@@ -84,7 +86,7 @@ public class MBCategoryStagedModelDataHandler
 
 		portletDataContext.addClassedModel(
 			categoryElement, ExportImportPathUtil.getModelPath(category),
-			category, MBPortletDataHandler.NAMESPACE);
+			category);
 	}
 
 	@Override
@@ -127,16 +129,9 @@ public class MBCategoryStagedModelDataHandler
 			(parentCategoryId != MBCategoryConstants.DISCUSSION_CATEGORY_ID) &&
 			(parentCategoryId == category.getParentCategoryId())) {
 
-			String parentCategoryPath = ExportImportPathUtil.getModelPath(
-				portletDataContext, MBCategory.class.getName(),
+			StagedModelDataHandlerUtil.importReferenceStagedModel(
+				portletDataContext, category, MBCategory.class,
 				parentCategoryId);
-
-			MBCategory parentCategory =
-				(MBCategory)portletDataContext.getZipEntryAsObject(
-					parentCategoryPath);
-
-			StagedModelDataHandlerUtil.importStagedModel(
-				portletDataContext, parentCategory);
 
 			parentCategoryId = MapUtil.getLong(
 				categoryIds, category.getParentCategoryId(),
@@ -144,7 +139,7 @@ public class MBCategoryStagedModelDataHandler
 		}
 
 		ServiceContext serviceContext = portletDataContext.createServiceContext(
-			category, MBPortletDataHandler.NAMESPACE);
+			category);
 
 		MBCategory importedCategory = null;
 
@@ -187,8 +182,30 @@ public class MBCategoryStagedModelDataHandler
 				outPassword, allowAnonymous, mailingListActive, serviceContext);
 		}
 
-		portletDataContext.importClassedModel(
-			category, importedCategory, MBPortletDataHandler.NAMESPACE);
+		portletDataContext.importClassedModel(category, importedCategory);
+	}
+
+	@Override
+	protected void doRestoreStagedModel(
+			PortletDataContext portletDataContext, MBCategory category)
+		throws Exception {
+
+		long userId = portletDataContext.getUserId(category.getUserUuid());
+
+		MBCategory existingCategory =
+			MBCategoryLocalServiceUtil.fetchMBCategoryByUuidAndGroupId(
+				category.getUuid(), portletDataContext.getScopeGroupId());
+
+		if ((existingCategory == null) || !existingCategory.isInTrash()) {
+			return;
+		}
+
+		TrashHandler trashHandler = existingCategory.getTrashHandler();
+
+		if (trashHandler.isRestorable(existingCategory.getCategoryId())) {
+			trashHandler.restoreTrashEntry(
+				userId, existingCategory.getCategoryId());
+		}
 	}
 
 }

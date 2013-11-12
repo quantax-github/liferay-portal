@@ -154,7 +154,12 @@ public class SetupWizardUtil {
 			request, PropsKeys.JDBC_DEFAULT_USERNAME, null);
 		String password = _getParameter(
 			request, PropsKeys.JDBC_DEFAULT_PASSWORD, null);
+
 		String jndiName = StringPool.BLANK;
+
+		if (Validator.isNotNull(PropsValues.JDBC_DEFAULT_JNDI_NAME)) {
+			jndiName = PropsValues.JDBC_DEFAULT_JNDI_NAME;
+		}
 
 		_testConnection(driverClassName, url, userName, password, jndiName);
 	}
@@ -220,7 +225,10 @@ public class SetupWizardUtil {
 
 		_initPlugins();
 
-		boolean propertiesFileCreated = _writePropertiesFile(unicodeProperties);
+		if (ParamUtil.getBoolean(request, "addSampleData")) {
+			SetupWizardSampleDataUtil.addSampleData(
+				PortalInstances.getDefaultCompanyId());
+		}
 
 		HttpSession session = request.getSession();
 
@@ -228,7 +236,7 @@ public class SetupWizardUtil {
 			WebKeys.SETUP_WIZARD_PROPERTIES, unicodeProperties);
 		session.setAttribute(
 			WebKeys.SETUP_WIZARD_PROPERTIES_FILE_CREATED,
-			propertiesFileCreated);
+			_writePropertiesFile(unicodeProperties));
 	}
 
 	private static String _getParameter(
@@ -338,7 +346,9 @@ public class SetupWizardUtil {
 			String password, String jndiName)
 		throws Exception {
 
-		Class.forName(driverClassName);
+		if (Validator.isNull(jndiName)) {
+			Class.forName(driverClassName);
+		}
 
 		DataSource dataSource = null;
 		Connection connection = null;

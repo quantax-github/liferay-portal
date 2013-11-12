@@ -20,11 +20,20 @@
 long groupId = ParamUtil.getLong(request, "groupId");
 long[] selectedGroupIds = StringUtil.split(ParamUtil.getString(request, "selectedGroupIds"), 0L);
 
-String type = ParamUtil.getString(request, "type", "sites-that-i-administer");
-String[] types = ParamUtil.getParameterValues(request, "types", new String[] {type});
+String type = ParamUtil.getString(request, "type");
+String[] types = ParamUtil.getParameterValues(request, "types");
 
-if (Validator.isNull(type) && (types.length > 0)) {
-	type = types[0];
+if (Validator.isNull(type)) {
+	if (types.length > 0) {
+		type = types[0];
+	}
+	else {
+		type = "sites-that-i-administer";
+	}
+}
+
+if (types.length == 0) {
+	types = new String[] {type};
 }
 
 String filter = ParamUtil.getString(request, "filter");
@@ -36,12 +45,14 @@ String target = ParamUtil.getString(request, "target");
 PortletURL portletURL = renderResponse.createRenderURL();
 
 portletURL.setParameter("struts_action", "/site_browser/view");
+portletURL.setParameter("groupId", String.valueOf(groupId));
+portletURL.setParameter("selectedGroupIds", StringUtil.merge(selectedGroupIds));
 portletURL.setParameter("type", type);
 portletURL.setParameter("types", types);
-portletURL.setParameter("groupId", String.valueOf(groupId));
 portletURL.setParameter("filter", filter);
 portletURL.setParameter("includeCompany", String.valueOf(includeCompany));
 portletURL.setParameter("includeUserPersonalSite", String.valueOf(includeUserPersonalSite));
+portletURL.setParameter("eventName", eventName);
 portletURL.setParameter("target", target);
 %>
 
@@ -200,13 +211,13 @@ portletURL.setParameter("target", target);
 				<%
 				Map<String, Object> data = new HashMap<String, Object>();
 
+				data.put("groupdescriptivename", HtmlUtil.escape(group.getDescriptiveName(locale)));
 				data.put("groupid", group.getGroupId());
-				data.put("groupname", HtmlUtil.escape(group.getDescriptiveName(locale)));
 				data.put("scopeid", HtmlUtil.escape(AssetPublisherUtil.getScopeId(group, scopeGroupId)));
 				data.put("target", target);
 				%>
 
-				<aui:button cssClass="selector-button" data="<%= data %>" value="choose" />
+				<aui:button cssClass="selector-button" data="<%= data %>" disabled="<%= ArrayUtil.contains(selectedGroupIds, group.getGroupId()) %>" value="choose" />
 			</liferay-ui:search-container-column-text>
 
 		</liferay-ui:search-container-row>

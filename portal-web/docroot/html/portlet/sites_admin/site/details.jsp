@@ -66,20 +66,19 @@ if (showPrototypes && (group != null)) {
 	}
 }
 
-boolean manualMembership = true;
+UnicodeProperties typeSettingsProperties = null;
 
 if (liveGroup != null) {
-	manualMembership = GetterUtil.getBoolean(liveGroup.isManualMembership(), true);
+	typeSettingsProperties = liveGroup.getTypeSettingsProperties();
 }
-
-boolean membershipRestriction = false;
-
-if ((liveGroup != null) && (liveGroup.getMembershipRestriction() == GroupConstants.MEMBERSHIP_RESTRICTION_TO_PARENT_SITE_MEMBERS)) {
-	membershipRestriction = true;
+else if (group != null) {
+	typeSettingsProperties = group.getTypeSettingsProperties();
 }
 %>
 
 <liferay-ui:error-marker key="errorSection" value="details" />
+
+<h3><liferay-ui:message key="details" /></h3>
 
 <aui:model-context bean="<%= liveGroup %>" model="<%= Group.class %>" />
 
@@ -131,7 +130,7 @@ if ((liveGroup != null) && (liveGroup.getMembershipRestriction() == GroupConstan
 		</c:when>
 		<c:when test="<%= (liveGroup != null) && liveGroup.isOrganization() %>">
 			<aui:field-wrapper helpMessage="the-name-of-this-site-cannot-be-edited-because-it-belongs-to-an-organization" label="name">
-				<%= HtmlUtil.escape(liveGroup.getDescriptiveName(locale)) %>
+				<liferay-ui:input-resource url="<%= liveGroup.getDescriptiveName(locale) %>" />
 			</aui:field-wrapper>
 		</c:when>
 		<c:otherwise>
@@ -140,6 +139,12 @@ if ((liveGroup != null) && (liveGroup.getMembershipRestriction() == GroupConstan
 	</c:choose>
 
 	<aui:input name="description" />
+
+	<c:if test="<%= liveGroup != null %>">
+		<aui:field-wrapper label="site-id">
+			<liferay-ui:input-resource url="<%= String.valueOf(liveGroup.getGroupId()) %>" />
+		</aui:field-wrapper>
+	</c:if>
 
 	<c:if test="<%= (group == null) || !group.isCompany() %>">
 		<aui:input name="active" value="<%= true %>" />
@@ -154,31 +159,15 @@ if ((liveGroup != null) && (liveGroup.getMembershipRestriction() == GroupConstan
 			<aui:option label="private" value="<%= GroupConstants.TYPE_SITE_PRIVATE %>" />
 		</aui:select>
 
-		<aui:input label="allow-manual-membership-management" name="manualMembership" value="<%= manualMembership %>" />
-	</c:if>
-
-	<c:if test="<%= (group != null) && !group.isCompany() %>">
-
 		<%
-		UnicodeProperties typeSettingsProperties = null;
+		boolean manualMembership = true;
 
 		if (liveGroup != null) {
-			typeSettingsProperties = liveGroup.getTypeSettingsProperties();
+			manualMembership = GetterUtil.getBoolean(liveGroup.isManualMembership(), true);
 		}
-		else {
-			typeSettingsProperties = group.getTypeSettingsProperties();
-		}
-
-		boolean directoryIndexingEnabled = PropertiesParamUtil.getBoolean(typeSettingsProperties, request, "directoryIndexingEnabled");
 		%>
 
-		<aui:input helpMessage='<%= LanguageUtil.format(pageContext, "directory-indexing-help", new Object[] {HtmlUtil.escape(group.getDescriptiveName(themeDisplay.getLocale())), themeDisplay.getPortalURL() + "/documents" + group.getFriendlyURL()}) %>' label="directory-indexing-enabled" name="TypeSettingsProperties--directoryIndexingEnabled--" type="checkbox" value="<%= directoryIndexingEnabled %>" />
-	</c:if>
-
-	<c:if test="<%= liveGroup != null %>">
-		<aui:field-wrapper label="site-id">
-			<%= liveGroup.getGroupId() %>
-		</aui:field-wrapper>
+		<aui:input label="allow-manual-membership-management" name="manualMembership" value="<%= manualMembership %>" />
 	</c:if>
 </aui:fieldset>
 
@@ -196,6 +185,8 @@ boolean hasUnlinkLayoutSetPrototypePermission = PortalPermissionUtil.contains(pe
 	<aui:fieldset>
 		<c:choose>
 			<c:when test="<%= showPrototypes && ((group != null) || (!layoutSetPrototypes.isEmpty() && (layoutSetPrototype == null))) %>">
+				<h3><liferay-ui:message key="pages" /></h3>
+
 				<liferay-ui:panel-container extended="<%= false %>">
 					<liferay-ui:panel collapsible="<%= true %>" defaultState='<%= ((group != null) && (group.getPublicLayoutsPageCount() > 0)) ? "open" : "closed" %>' title="public-pages">
 						<c:choose>
@@ -216,7 +207,7 @@ boolean hasUnlinkLayoutSetPrototypePermission = PortalPermissionUtil.contains(pe
 										String servletContextName = settingsProperties.getProperty("customJspServletContextName", StringPool.BLANK);
 									%>
 
-										<aui:option data-servletContextName="<%= servletContextName %>" disabled="<%= (privateLayoutSetPrototype != null) && (curLayoutSetPrototype.getLayoutSetPrototypeId() == privateLayoutSetPrototype.getLayoutSetPrototypeId()) %>" value="<%= curLayoutSetPrototype.getLayoutSetPrototypeId() %>"><%= HtmlUtil.escape(curLayoutSetPrototype.getName(user.getLanguageId())) %></aui:option>
+										<aui:option data-servletContextName="<%= servletContextName %>" value="<%= curLayoutSetPrototype.getLayoutSetPrototypeId() %>"><%= HtmlUtil.escape(curLayoutSetPrototype.getName(user.getLanguageId())) %></aui:option>
 
 									<%
 									}
@@ -318,7 +309,7 @@ boolean hasUnlinkLayoutSetPrototypePermission = PortalPermissionUtil.contains(pe
 										String servletContextName = settingsProperties.getProperty("customJspServletContextName", StringPool.BLANK);
 									%>
 
-										<aui:option data-servletContextName="<%= servletContextName %>" disabled="<%= (publicLayoutSetPrototype != null) && (curLayoutSetPrototype.getLayoutSetPrototypeId() == publicLayoutSetPrototype.getLayoutSetPrototypeId()) %>" value="<%= curLayoutSetPrototype.getLayoutSetPrototypeId() %>"><%= HtmlUtil.escape(curLayoutSetPrototype.getName(user.getLanguageId())) %></aui:option>
+										<aui:option data-servletContextName="<%= servletContextName %>" value="<%= curLayoutSetPrototype.getLayoutSetPrototypeId() %>"><%= HtmlUtil.escape(curLayoutSetPrototype.getName(user.getLanguageId())) %></aui:option>
 
 									<%
 									}
@@ -413,9 +404,7 @@ boolean hasUnlinkLayoutSetPrototypePermission = PortalPermissionUtil.contains(pe
 						<%
 						String customJspServletContextName = StringPool.BLANK;
 
-						if (liveGroup != null) {
-							UnicodeProperties typeSettingsProperties = liveGroup.getTypeSettingsProperties();
-
+						if (typeSettingsProperties != null) {
 							customJspServletContextName = GetterUtil.getString(typeSettingsProperties.get("customJspServletContextName"));
 						}
 						%>
@@ -555,9 +544,10 @@ boolean hasUnlinkLayoutSetPrototypePermission = PortalPermissionUtil.contains(pe
 
 	<liferay-ui:icon
 		cssClass="modify-link"
+		iconCssClass="icon-search"
 		id="selectParentSiteLink"
-		image="add"
 		label="<%= true %>"
+		linkCssClass="btn"
 		message="select"
 		url="javascript:;"
 	/>
@@ -565,7 +555,26 @@ boolean hasUnlinkLayoutSetPrototypePermission = PortalPermissionUtil.contains(pe
 	<br />
 
 	<div class="<%= parentGroups.isEmpty() ? "membership-restriction-container hide" : "membership-restriction-container" %>" id="<portlet:namespace />membershipRestrictionContainer">
+
+		<%
+		boolean membershipRestriction = false;
+
+		if ((liveGroup != null) && (liveGroup.getMembershipRestriction() == GroupConstants.MEMBERSHIP_RESTRICTION_TO_PARENT_SITE_MEMBERS)) {
+			membershipRestriction = true;
+		}
+		%>
+
 		<aui:input label="limit-membership-to-members-of-the-parent-site" name="membershipRestriction" type="checkbox" value="<%= membershipRestriction %>" />
+
+		<%
+		boolean breadcrumbShowParentGroups = PropsValues.BREADCRUMB_SHOW_PARENT_GROUPS;
+
+		if (typeSettingsProperties != null) {
+			breadcrumbShowParentGroups = PropertiesParamUtil.getBoolean(typeSettingsProperties, request, "breadcrumbShowParentGroups", breadcrumbShowParentGroups);
+		}
+		%>
+
+		<aui:input label="show-parent-sites-in-the-breadcrumb" name="TypeSettingsProperties--breadcrumbShowParentGroups--" type="checkbox" value="<%= breadcrumbShowParentGroups %>" />
 	</div>
 
 	<portlet:renderURL var="groupSelectorURL" windowState="<%= LiferayWindowState.POP_UP.toString() %>">
@@ -611,7 +620,7 @@ boolean hasUnlinkLayoutSetPrototypePermission = PortalPermissionUtil.contains(pe
 
 						var href = "<portlet:renderURL><portlet:param name="struts_action" value="/sites_admin/edit_site" /><portlet:param name="redirect" value="<%= currentURL %>" /></portlet:renderURL>&<portlet:namespace />groupId=" + event.groupid;
 
-						rowColumns.push(createURL(href, A.Escape.html(event.groupname)));
+						rowColumns.push(createURL(href, A.Escape.html(event.groupdescriptivename)));
 						rowColumns.push(event.grouptype);
 						rowColumns.push('<a class="modify-link" data-rowId="' + event.groupid + '" href="javascript:;"><%= UnicodeFormatter.toString(removeGroupIcon) %></a>');
 

@@ -41,6 +41,7 @@ import com.liferay.portal.model.impl.PortletImpl;
 import com.liferay.portal.repository.liferayrepository.LiferayRepository;
 import com.liferay.portal.search.lucene.LuceneHelperUtil;
 import com.liferay.portal.security.auth.PrincipalThreadLocal;
+import com.liferay.portal.security.lang.DoPrivilegedUtil;
 import com.liferay.portal.security.permission.PermissionChecker;
 import com.liferay.portal.security.permission.PermissionCheckerFactoryUtil;
 import com.liferay.portal.security.permission.PermissionThreadLocal;
@@ -123,7 +124,7 @@ public class ServiceTestUtil {
 	}
 
 	public static void destroyServices() {
-		_deleteDLDirectories();
+		_deleteDirectories();
 	}
 
 	public static SearchContext getSearchContext() throws Exception {
@@ -188,24 +189,10 @@ public class ServiceTestUtil {
 	public static void initServices() {
 		InitUtil.initWithSpring();
 
-		_deleteDLDirectories();
-
 		// JCR
 
 		try {
 			JCRFactoryUtil.prepare();
-		}
-		catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		// Lucene
-
-		try {
-			FileUtil.mkdirs(
-				PropsValues.LUCENE_DIR + TestPropsValues.getCompanyId());
-
-			LuceneHelperUtil.startup(TestPropsValues.getCompanyId());
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -245,7 +232,9 @@ public class ServiceTestUtil {
 				SynchronousMessageSender.class.getName());
 
 		MessageBusUtil.init(
-			messageBus, messageSender, synchronousMessageSender);
+			DoPrivilegedUtil.wrap(messageBus),
+			DoPrivilegedUtil.wrap(messageSender),
+			DoPrivilegedUtil.wrap(synchronousMessageSender));
 
 		if (TestPropsValues.DL_FILE_ENTRY_PROCESSORS_TRIGGER_SYNCHRONOUSLY) {
 			_replaceWithSynchronousDestination(
@@ -308,6 +297,22 @@ public class ServiceTestUtil {
 		try {
 			CompanyLocalServiceUtil.checkCompany(
 				TestPropsValues.COMPANY_WEB_ID);
+		}
+		catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		// Directories
+
+		_deleteDirectories();
+
+		// Lucene
+
+		try {
+			FileUtil.mkdirs(
+				PropsValues.LUCENE_DIR + TestPropsValues.getCompanyId());
+
+			LuceneHelperUtil.startup(TestPropsValues.getCompanyId());
 		}
 		catch (Exception e) {
 			e.printStackTrace();
@@ -399,6 +404,10 @@ public class ServiceTestUtil {
 	}
 
 	public static void setUser(User user) throws Exception {
+		if (user == null) {
+			return;
+		}
+
 		PrincipalThreadLocal.setName(user.getUserId());
 
 		PermissionChecker permissionChecker =
@@ -439,7 +448,7 @@ public class ServiceTestUtil {
 		}
 	}
 
-	private static void _deleteDLDirectories() {
+	private static void _deleteDirectories() {
 		FileUtil.deltree(PropsValues.DL_STORE_FILE_SYSTEM_ROOT_DIR);
 
 		FileUtil.deltree(

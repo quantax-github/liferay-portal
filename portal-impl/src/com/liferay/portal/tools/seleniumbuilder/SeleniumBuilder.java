@@ -15,12 +15,16 @@
 package com.liferay.portal.tools.seleniumbuilder;
 
 import com.liferay.portal.kernel.util.SetUtil;
+import com.liferay.portal.kernel.util.StringPool;
 import com.liferay.portal.kernel.util.StringUtil;
+import com.liferay.portal.kernel.xml.Element;
 import com.liferay.portal.tools.ArgumentsUtil;
 import com.liferay.portal.util.InitUtil;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 
 /**
  * @author Michael Hashimoto
@@ -109,19 +113,41 @@ public class SeleniumBuilder {
 			}
 		}
 
-		if (types.contains("testsuite")) {
-			TestSuiteConverter testSuiteConverter = new TestSuiteConverter(
-				seleniumBuilderContext);
+		SeleniumBuilderFileUtil seleniumBuilderFileUtil =
+			new SeleniumBuilderFileUtil(baseDir);
 
-			Set<String> testSuiteNames =
-				seleniumBuilderContext.getTestSuiteNames();
+		Set<String> testCaseMethodNames = new TreeSet<String>();
+		int testCaseCount = 0;
 
-			for (String testSuiteName : testSuiteNames) {
-				seleniumBuilderContext.validateTestSuiteElements(testSuiteName);
+		Set<String> testCaseNames = seleniumBuilderContext.getTestCaseNames();
 
-				testSuiteConverter.convert(testSuiteName);
+		for (String testCaseName : testCaseNames) {
+			Element rootElement = seleniumBuilderContext.getTestCaseRootElement(
+				testCaseName);
+
+			List<Element> commandElements =
+				seleniumBuilderFileUtil.getAllChildElements(
+					rootElement, "command");
+
+			for (Element commandElement : commandElements) {
+				testCaseMethodNames.add(
+					testCaseName + "TestCase#test" +
+						commandElement.attributeValue("name"));
 			}
+
+			testCaseCount += commandElements.size();
 		}
+
+		String testCaseMethodNamesString = StringUtil.merge(
+			testCaseMethodNames.toArray(
+				new String[testCaseMethodNames.size()]),
+			StringPool.SPACE);
+
+		seleniumBuilderFileUtil.writeFile(
+			"../../../test.case.method.names.properties",
+			"TEST_CASE_METHOD_NAMES=" + testCaseMethodNamesString, false);
+
+		System.out.println("\nThere are " + testCaseCount + " test cases.");
 	}
 
 }
